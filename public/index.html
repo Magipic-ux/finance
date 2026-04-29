@@ -506,9 +506,12 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
         <div style="font-size:11px;color:#374151;margin-top:6px">Stored locally only. Used only for receipt scanning.</div>
       </div>
       <div style="margin-bottom:14px">
-        <label>Claude Model for OCR <span style="color:#475569;font-weight:400">(leave blank for default)</span></label>
-        <input type="text" id="settings-ocr-model" placeholder="claude-3-5-sonnet-20241022" autocomplete="off">
-        <div style="font-size:11px;color:#374151;margin-top:6px">If OCR gives a 404 error, enter a model your API key can access. Default: claude-3-5-sonnet-20241022</div>
+        <label>Claude Model for OCR</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="settings-ocr-model" placeholder="claude-3-5-sonnet-20241022" autocomplete="off" style="flex:1">
+          <button class="btn btn-secondary btn-sm" onclick="detectAnthropicModels()" style="white-space:nowrap">🔍 Detect</button>
+        </div>
+        <div id="ocr-model-status" style="font-size:11px;color:#374151;margin-top:6px">Click Detect to find which models your API key can access, then Save.</div>
       </div>
       <div id="ocr-key-status" style="font-size:12px"></div>
     </div>
@@ -1090,6 +1093,32 @@ function updateYoyPreview() {
   const curNet = 4147.35 - 736.73;
   const pct = pyNet > 0 ? ((curNet-pyNet)/pyNet*100).toFixed(1) : 'N/A';
   el.innerHTML = `<span style="color:#64748b">Prior year net: </span><span style="color:#e2e8f0">${fmt(pyNet)}</span>&nbsp;→&nbsp;<span style="color:#4ade80">YoY: ${pct !== 'N/A' ? (pct>0?'+':'')+pct+'%' : 'N/A'}</span>`;
+}
+
+async function detectAnthropicModels() {
+  const apiKey = document.getElementById('settings-api-key').value.trim() || data.settings.anthropicKey;
+  const statusEl = document.getElementById('ocr-model-status');
+  if (!apiKey) { statusEl.innerHTML='<span style="color:#f87171">Enter your API key first.</span>'; return; }
+  statusEl.innerHTML = '<span style="color:#94a3b8">Querying Anthropic...</span>';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/models', {
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      }
+    });
+    if (!res.ok) { const e=await res.json().catch(()=>({})); statusEl.innerHTML=`<span style="color:#f87171">API error ${res.status}: ${e?.error?.message||'check key'}</span>`; return; }
+    const j = await res.json();
+    const models = (j.data||[]).map(m=>m.id).filter(id=>id.includes('claude'));
+    if (!models.length) { statusEl.innerHTML='<span style="color:#fbbf24">No Claude models found for this key.</span>'; return; }
+    // Prefer cheapest vision-capable: haiku > sonnet > opus
+    const preferred = models.find(m=>m.includes('haiku')) || models.find(m=>m.includes('sonnet')) || models[0];
+    document.getElementById('settings-ocr-model').value = preferred;
+    statusEl.innerHTML = `<span style="color:#4ade80">✅ Found ${models.length} model(s). Selected: <strong>${preferred}</strong></span><br><span style="color:#475569">All: ${models.join(', ')}</span>`;
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:#f87171">Detection failed: ${e.message}</span>`;
+  }
 }
 
 function saveSettings() {
