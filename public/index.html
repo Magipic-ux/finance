@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Magipic Finance</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#09090f;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;display:flex;height:100vh;overflow:hidden}
+#sidebar{width:232px;flex-shrink:0;background:#0d0d1a;border-right:1px solid #1a1a30;display:flex;flex-direction:column;overflow-y:auto}
+#main{flex:1;overflow-y:auto;background:#09090f}
+.card{background:#10101e;border:1px solid #1a1a30;border-radius:12px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;color:#64748b;transition:all .15s;font-size:13.5px;font-weight:500;margin:1px 8px}
+.nav-item:hover{background:#15152a;color:#cbd5e1}
+.nav-item.active{background:#1a1040;color:#a78bfa}
+.nav-dot{width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-green{background:#052e16;color:#4ade80}
+.badge-red{background:#3b0a0a;color:#f87171}
+.badge-amber{background:#3b1a03;color:#fbbf24}
+.badge-blue{background:#082040;color:#38bdf8}
+.badge-gray{background:#1a1a2e;color:#94a3b8}
+.badge-violet{background:#1e0a48;color:#c4b5fd}
+.badge-orange{background:#3b1500;color:#fb923c}
+.badge-teal{background:#042f2e;color:#2dd4bf}
+input,select,textarea{background:#0d0d1a;border:1px solid #252540;border-radius:8px;color:#e2e8f0;padding:8px 12px;font-size:13px;width:100%;outline:none;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+input[type=range]{padding:4px 0;background:transparent;border:none}
+select option{background:#0d0d1a}
+label{font-size:12px;font-weight:500;color:#64748b;margin-bottom:4px;display:block}
+.btn{border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:#7c3aed;color:#fff}.btn-primary:hover{background:#6d28d9}
+.btn-secondary{background:#1a1a30;color:#94a3b8;border:1px solid #252540}.btn-secondary:hover{background:#1f1f3a;color:#e2e8f0}
+.btn-success{background:#065f46;color:#6ee7b7}.btn-success:hover{background:#064e3b}
+.btn-danger{background:#450a0a;color:#fca5a5}.btn-danger:hover{background:#3b0606}
+.btn-teal{background:#042f2e;color:#2dd4bf;border:1px solid #0f766e}.btn-teal:hover{background:#0f766e}
+.btn-sm{padding:5px 10px;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 14px;color:#475569;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #1a1a30;white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid #0f0f1c;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(255,255,255,.02)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#10101e;border:1px solid #252540;border-radius:16px;padding:28px;width:580px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.page{display:none;padding:28px}
+.page.active{display:block}
+.kpi{padding:20px 22px}
+.kpi-label{font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em}
+.kpi-value{font-size:26px;font-weight:700;margin-top:6px;line-height:1}
+.kpi-sub{font-size:12px;color:#475569;margin-top:6px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-head{text-align:center;font-size:11px;font-weight:600;color:#475569;padding:8px 0;text-transform:uppercase;letter-spacing:.05em}
+.cal-day{min-height:72px;padding:6px;border:1px solid #1a1a30;border-radius:8px;cursor:pointer;transition:background .1s;font-size:12px;font-weight:500}
+.cal-day:hover{background:#15152a}
+.cal-day.today{border-color:#7c3aed;background:#1a1040}
+.cal-day.other-month{opacity:.25}
+.cal-event{font-size:10px;padding:2px 5px;border-radius:4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-red{background:#450a0a;color:#f87171}
+.ev-amber{background:#451a03;color:#fbbf24}
+.ev-blue{background:#082040;color:#60a5fa}
+.ev-green{background:#052e16;color:#4ade80}
+.ev-violet{background:#1e0a48;color:#c4b5fd}
+.alert{border-radius:10px;padding:14px 18px;display:flex;align-items:flex-start;gap:12px}
+.alert-red{background:#1f0808;border:1px solid #450a0a}
+.alert-amber{background:#1a0f03;border:1px solid #451a03}
+.alert-green{background:#071a10;border:1px solid #065f46}
+.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#374151;padding:0 4px;margin-bottom:6px;margin-top:18px}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#252540;border-radius:2px}
+.progress-bar{background:#1a1a30;border-radius:999px;height:8px;overflow:hidden}
+.progress-fill{height:100%;border-radius:999px;transition:width .5s}
+.tab-btn{padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;color:#64748b;background:transparent;border:none;transition:all .15s}
+.tab-btn.active{background:#1a1040;color:#a78bfa}
+.receipt-thumb{width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid #252540;cursor:pointer}
+.drag-zone{border:2px dashed #252540;border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all .2s}
+.drag-zone:hover,.drag-zone.over{border-color:#7c3aed;background:#1a1040}
+/* OCR */
+.ocr-loading{display:none;align-items:center;gap:10px;background:#1a1040;border:1px solid #7c3aed;border-radius:10px;padding:12px 16px;margin-top:10px}
+.ocr-spinner{width:18px;height:18px;border:2px solid #7c3aed;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ocr-result{display:none;background:#071a10;border:1px solid #065f46;border-radius:10px;padding:12px 16px;margin-top:10px;font-size:12px}
+/* Budget */
+.budget-bar-wrap{margin-bottom:12px}
+.budget-label-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.over-budget .progress-fill{background:#ef4444!important}
+.over-budget .budget-label-row span:last-child{color:#f87171;font-weight:700}
+/* P&L */
+.pl-up{color:#4ade80}
+.pl-down{color:#f87171}
+.pl-neutral{color:#94a3b8}
+.trend-badge{font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px}
+.trend-up{background:#052e16;color:#4ade80}
+.trend-down{background:#3b0a0a;color:#f87171}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div style="padding:22px 16px 16px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#c026d3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">✨</div>
+      <div>
+        <div style="font-size:16px;font-weight:700;line-height:1.1"><span style="color:#fff">Magi</span><span style="color:#a78bfa">pic</span></div>
+        <div style="font-size:10px;color:#475569;font-weight:500;letter-spacing:.04em;margin-top:2px">FINANCE</div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:0 8px;flex:1">
+    <div class="section-title">Overview</div>
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-dot">📊</span>Dashboard</div>
+    <div class="nav-item" onclick="showPage('expenses')"><span class="nav-dot">💰</span>Expenses</div>
+    <div class="nav-item" onclick="showPage('payments')"><span class="nav-dot">📋</span>Payments Due</div>
+    <div class="section-title">Cashflow</div>
+    <div class="nav-item" onclick="showPage('stripe')"><span class="nav-dot">⚡</span>Stripe Revenue</div>
+    <div class="nav-item" onclick="showPage('calendar')"><span class="nav-dot">🗓️</span>Calendar</div>
+    <div class="section-title">Suppliers</div>
+    <div class="nav-item" id="nav-inbox" onclick="showPage('inbox')"><span class="nav-dot">📥</span>Invoice Inbox</div>
+    <div class="section-title">Reports</div>
+    <div class="nav-item" onclick="showPage('reports')"><span class="nav-dot">📄</span>Export Reports</div>
+    <div class="nav-item" onclick="showPage('settings')"><span class="nav-dot">⚙️</span>Settings & Budgets</div>
+  </div>
+  <div style="padding:16px;border-top:1px solid #1a1a30;font-size:11px;color:#374151">
+    <div style="margin-bottom:4px;font-weight:600;color:#475569">Magipic AI, LLC</div>
+    <div>acct_1SRctgBgUBXjewYX</div>
+    <div style="margin-top:8px;display:flex;align-items:center;gap:6px">
+      <div style="width:6px;height:6px;border-radius:50%;background:#4ade80"></div><span>Live mode</span>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+<!-- ===== DASHBOARD ===== -->
+<div id="page-dashboard" class="page active">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <h1 style="font-size:22px;font-weight:700">Financial Dashboard</h1>
+      <div style="color:#475569;font-size:13px;margin-top:2px" id="dashboard-date"></div>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('expense-modal')">+ Add Expense</button>
+  </div>
+  <div id="dashboard-alerts"></div>
+
+  <!-- MRR / Balance KPIs -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px">
+    <div class="card kpi">
+      <div class="kpi-label">Stripe Balance</div>
+      <div class="kpi-value" style="color:#4ade80">$0.00</div>
+      <div class="kpi-sub">Available · Live</div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-label">Confirmed MRR</div>
+      <div class="kpi-value" style="color:#a78bfa" id="kpi-mrr">$1,398.99</div>
+      <div class="kpi-sub" id="kpi-mrr-sub">3 active subscriptions</div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-label">Total Expenses (MTD)</div>
+      <div class="kpi-value" style="color:#fb923c" id="kpi-expenses">$0</div>
+      <div class="kpi-sub" id="kpi-expenses-sub">This month</div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-label">Net Position (Est.)</div>
+      <div class="kpi-value" id="kpi-net">$0</div>
+      <div class="kpi-sub">MRR minus MTD expenses</div>
+    </div>
+  </div>
+
+  <!-- P&L Row -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px">
+    <div class="card kpi" style="border-color:#1e3a2a">
+      <div class="kpi-label">Revenue (April)</div>
+      <div class="kpi-value pl-up" id="kpi-rev-month">$4,147.35</div>
+      <div class="kpi-sub">Stripe receipts this month</div>
+    </div>
+    <div class="card kpi" style="border-color:#3a1e1e">
+      <div class="kpi-label">Expenses (April)</div>
+      <div class="kpi-value pl-down" id="kpi-exp-month">$0</div>
+      <div class="kpi-sub">Recorded expenses</div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-label">Net P&amp;L (April)</div>
+      <div class="kpi-value" id="kpi-pl-month">$0</div>
+      <div class="kpi-sub" id="kpi-pl-mom"></div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-label">Net P&amp;L (YoY)</div>
+      <div class="kpi-value" id="kpi-pl-yoy" style="color:#94a3b8">—</div>
+      <div class="kpi-sub" id="kpi-pl-yoy-sub" style="cursor:pointer;color:#7c3aed" onclick="showPage('settings')">Enter prior year data ↗</div>
+    </div>
+  </div>
+
+  <!-- Budget warnings -->
+  <div id="budget-warnings" style="margin-bottom:14px"></div>
+
+  <!-- Charts row -->
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:14px;margin-bottom:20px">
+    <div class="card" style="padding:20px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:16px;color:#94a3b8">6-Month Revenue vs Expenses</div>
+      <canvas id="revenue-chart" height="200"></canvas>
+    </div>
+    <div class="card" style="padding:20px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:16px;color:#94a3b8">Expenses by Category</div>
+      <canvas id="pie-chart-dash" height="180"></canvas>
+      <div id="pie-legend-dash" style="margin-top:12px;font-size:11px"></div>
+    </div>
+  </div>
+
+  <!-- Bottom row -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="card">
+      <div style="padding:16px 16px 10px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;font-weight:600;color:#94a3b8">Recent Expenses</span>
+        <button class="btn btn-secondary btn-sm" onclick="showPage('expenses')">View all</button>
+      </div>
+      <table><thead><tr><th>Date</th><th>Vendor</th><th>Category</th><th>Amount</th></tr></thead>
+      <tbody id="dash-expenses-table"></tbody></table>
+    </div>
+    <div class="card">
+      <div style="padding:16px 16px 10px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;font-weight:600;color:#94a3b8">Upcoming Payments</span>
+        <button class="btn btn-secondary btn-sm" onclick="showPage('payments')">View all</button>
+      </div>
+      <table><thead><tr><th>Due</th><th>Description</th><th>Amount</th><th>Status</th></tr></thead>
+      <tbody id="dash-payments-table"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EXPENSES ===== -->
+<div id="page-expenses" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <h1 style="font-size:22px;font-weight:700">Expenses</h1>
+      <div style="color:#475569;font-size:13px;margin-top:2px">Upload receipts and track all spending by category</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary" onclick="document.getElementById('csv-import-input').click()" title="Import bank/CC statement CSV or Excel">📊 Import Statement</button>
+      <input type="file" id="csv-import-input" accept=".csv,.xlsx,.xls" style="display:none" onchange="importBankStatement(this)">
+      <button class="btn btn-secondary" onclick="document.getElementById('receipt-bulk-upload').click()">📎 Upload Receipt</button>
+      <input type="file" id="receipt-bulk-upload" accept="image/*,application/pdf" style="display:none" onchange="handleQuickUpload(this)">
+      <button class="btn btn-primary" onclick="openModal('expense-modal')">+ Add Expense</button>
+    </div>
+  </div>
+
+  <!-- Receipt drop zone -->
+  <div id="receipt-drop-zone" style="border:2px dashed #252540;border-radius:12px;padding:14px 20px;margin-bottom:16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s"
+    ondragover="event.preventDefault();this.style.borderColor='#7c3aed';this.style.background='#1a1040'"
+    ondragleave="this.style.borderColor='#252540';this.style.background=''"
+    ondrop="handleReceiptDrop(event)"
+    onclick="document.getElementById('receipt-bulk-upload').click()">
+    <span style="font-size:24px">📥</span>
+    <div>
+      <div style="font-size:13px;font-weight:600;color:#94a3b8">Drop receipt or invoice here</div>
+      <div id="drop-zone-status" style="font-size:11px;color:#374151">Image or PDF → auto-OCR &amp; add expense. If Make.com webhook is set, also sends to your Drive pipeline.</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+    <input type="text" id="expense-search" placeholder="🔍  Search expenses..." style="width:220px" oninput="renderExpenses()">
+    <select id="expense-cat-filter" onchange="renderExpenses()" style="width:200px"><option value="">All Categories</option></select>
+    <select id="expense-month-filter" onchange="renderExpenses()" style="width:160px"><option value="">All Months</option></select>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;color:#475569">
+      Total: <span id="expense-total-display" style="color:#fb923c;font-weight:700;font-size:15px">$0</span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 300px;gap:14px">
+    <div class="card" style="overflow:hidden">
+      <table>
+        <thead><tr><th>Date</th><th>Vendor</th><th>Description</th><th>Category</th><th>Amount</th><th>Receipt</th><th></th></tr></thead>
+        <tbody id="expense-table"></tbody>
+      </table>
+      <div id="expense-empty" style="display:none;padding:40px;text-align:center;color:#374151;font-size:14px">No expenses found.</div>
+    </div>
+    <div>
+      <div class="card" style="padding:18px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:14px">By Category</div>
+        <canvas id="pie-chart-expenses" height="200"></canvas>
+        <div id="pie-legend-expenses" style="margin-top:12px;font-size:11px"></div>
+      </div>
+      <div class="card" style="padding:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <span style="font-size:13px;font-weight:600;color:#94a3b8">Budget vs Actual</span>
+          <button class="btn btn-secondary btn-sm" onclick="showPage('settings')">Edit budgets</button>
+        </div>
+        <div id="budget-breakdown"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAYMENTS DUE ===== -->
+<div id="page-payments" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <h1 style="font-size:22px;font-weight:700">Payments Due</h1>
+      <div style="color:#475569;font-size:13px;margin-top:2px">Upcoming bills, subscriptions, and one-time payments</div>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('payment-modal')">+ Add Payment</button>
+  </div>
+  <div id="payments-alerts" style="margin-bottom:16px"></div>
+  <div style="display:flex;gap:6px;margin-bottom:16px">
+    <button class="tab-btn active" id="ptab-all" onclick="filterPayments('all')">All</button>
+    <button class="tab-btn" id="ptab-overdue" onclick="filterPayments('overdue')">🔴 Overdue</button>
+    <button class="tab-btn" id="ptab-due-soon" onclick="filterPayments('due-soon')">🟡 Due Soon</button>
+    <button class="tab-btn" id="ptab-upcoming" onclick="filterPayments('upcoming')">🔵 Upcoming</button>
+    <button class="tab-btn" id="ptab-paid" onclick="filterPayments('paid')">✅ Paid</button>
+  </div>
+  <div class="card" style="overflow:hidden">
+    <table>
+      <thead><tr><th>Due Date</th><th>Vendor</th><th>Description</th><th>Category</th><th>Amount</th><th>Recurring</th><th>Status</th><th></th></tr></thead>
+      <tbody id="payments-table"></tbody>
+    </table>
+    <div id="payments-empty" style="display:none;padding:40px;text-align:center;color:#374151;font-size:14px">No payments in this category.</div>
+  </div>
+</div>
+
+<!-- ===== STRIPE ===== -->
+<div id="page-stripe" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <h1 style="font-size:22px;font-weight:700">Stripe Revenue & Cashflow</h1>
+      <div style="color:#475569;font-size:13px;margin-top:2px">Live data — Magipic AI, LLC</div>
+    </div>
+    <span class="badge badge-green" style="font-size:12px;padding:5px 12px">● Live Mode</span>
+  </div>
+  <div class="alert alert-red" style="margin-bottom:20px">
+    <span style="font-size:20px">⚠️</span>
+    <div><div style="font-weight:600;color:#f87171;font-size:13px">Payment Failing — Action Required</div>
+    <div style="font-size:12px;color:#f87171;opacity:.8;margin-top:2px">Nils Vilnis (nvilnis@gmail.com) — $99.00/mo has an open invoice. Contact customer to update payment method.</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
+    <div class="card kpi"><div class="kpi-label">Available Balance</div><div class="kpi-value" style="color:#4ade80">$0.00</div><div class="kpi-sub">USD · Live</div></div>
+    <div class="card kpi"><div class="kpi-label">Confirmed MRR</div><div class="kpi-value" style="color:#a78bfa">$1,398.99</div><div class="kpi-sub">Solodigitalis + Miklos + Aranit</div></div>
+    <div class="card kpi"><div class="kpi-label">At-Risk Revenue</div><div class="kpi-value" style="color:#f87171">$99.00</div><div class="kpi-sub">Nils Vilnis — failing</div></div>
+    <div class="card kpi"><div class="kpi-label">Next 30 Days (Est.)</div><div class="kpi-value" style="color:#60a5fa">$1,398.99</div><div class="kpi-sub">Subscription billings only</div></div>
+  </div>
+  <!-- Sumit Revenue Panel -->
+  <div id="sumit-panel" class="card" style="padding:20px;margin-bottom:20px;display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-size:14px;font-weight:600;color:#94a3b8">🇮🇱 Sumit Recurring Revenue</div>
+      <button class="btn btn-secondary btn-sm" onclick="loadSumitRevenue()">↻ Refresh Sumit</button>
+    </div>
+    <div id="sumit-content">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px" id="sumit-kpis">
+        <div class="card kpi" style="border-color:#1e3a2a"><div class="kpi-label">Sumit MRR</div><div class="kpi-value" id="sumit-mrr" style="color:#4ade80">—</div><div class="kpi-sub">Recurring (ILS)</div></div>
+        <div class="card kpi"><div class="kpi-label">Documents (MTD)</div><div class="kpi-value" id="sumit-doc-count" style="color:#a78bfa">—</div><div class="kpi-sub">This month</div></div>
+        <div class="card kpi"><div class="kpi-label">Total Revenue (MTD)</div><div class="kpi-value" id="sumit-total" style="color:#60a5fa">—</div><div class="kpi-sub">All Sumit docs</div></div>
+      </div>
+      <div id="sumit-table-wrap" style="margin-top:14px">
+        <div id="sumit-loading" style="display:none;padding:20px;text-align:center;color:#64748b;font-size:13px">Loading Sumit data...</div>
+        <table id="sumit-table" style="display:none"><thead><tr><th>Date</th><th>Document #</th><th>Customer</th><th>Amount</th><th>Type</th></tr></thead><tbody id="sumit-tbody"></tbody></table>
+        <div id="sumit-empty" style="padding:20px;text-align:center;color:#374151;font-size:13px">No Sumit data loaded. Click Refresh Sumit.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 340px;gap:14px;margin-bottom:20px">
+    <div class="card" style="padding:20px">
+      <div style="font-size:14px;font-weight:600;color:#94a3b8;margin-bottom:16px">3-Month Cashflow Forecast</div>
+      <canvas id="cashflow-chart" height="200"></canvas>
+      <div style="margin-top:12px;font-size:11px;color:#374151;display:flex;gap:16px">
+        <span><span style="display:inline-block;width:10px;height:10px;background:#7c3aed;border-radius:2px;margin-right:4px"></span>Subscriptions</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#0ea5e9;border-radius:2px;margin-right:4px"></span>Est. One-time</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#f87171;border-radius:2px;margin-right:4px"></span>Est. Expenses</span>
+      </div>
+    </div>
+    <div class="card" style="padding:20px">
+      <div style="font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:14px">Payment Timing Guide</div>
+      <div style="font-size:12px;color:#475569;line-height:1.8">
+        <div style="background:#0f0f1c;border-radius:8px;padding:12px;margin-bottom:8px"><div style="color:#4ade80;font-weight:600">✅ Safe to pay now</div><div style="margin-top:4px;color:#64748b">Solodigitalis ($1,200) billed Apr 27. Cash confirmed.</div></div>
+        <div style="background:#0f0f1c;border-radius:8px;padding:12px;margin-bottom:8px"><div style="color:#fbbf24;font-weight:600">⏳ Pay after May 15</div><div style="margin-top:4px;color:#64748b">Miklos Gergely ($99) bills ~May 15.</div></div>
+        <div style="background:#0f0f1c;border-radius:8px;padding:12px"><div style="color:#fbbf24;font-weight:600">⏳ Pay after May 25</div><div style="margin-top:4px;color:#64748b">Aranit Allkja ($99) bills ~May 25.</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:20px">
+    <div style="padding:16px 16px 10px;font-size:13px;font-weight:600;color:#94a3b8">Active Subscriptions</div>
+    <table><thead><tr><th>Customer</th><th>Email</th><th>Country</th><th>Amount/mo</th><th>Next Billing</th><th>Status</th><th>Annual Value</th></tr></thead>
+    <tbody>
+      <tr><td style="font-weight:500">Solodigitalis Inc</td><td style="color:#64748b">tim@solodigitalis.com</td><td><span class="badge badge-gray">🇨🇦 CA</span></td><td style="color:#4ade80;font-weight:600">$1,200.00</td><td>May 28, 2026</td><td><span class="badge badge-green">Active</span></td><td style="color:#4ade80">$14,400</td></tr>
+      <tr><td style="font-weight:500">Aranit Allkja</td><td style="color:#64748b">selfiemirroralbania@gmail.com</td><td><span class="badge badge-gray">🇦🇱 AL</span></td><td style="color:#4ade80;font-weight:600">$99.00</td><td>May 25, 2026</td><td><span class="badge badge-green">Active</span></td><td style="color:#4ade80">$1,188</td></tr>
+      <tr><td style="font-weight:500">Miklos Gergely</td><td style="color:#64748b">miklos.gergely@gmail.com</td><td><span class="badge badge-gray">🇭🇺 HU</span></td><td style="color:#4ade80;font-weight:600">$99.00</td><td>May 15, 2026</td><td><span class="badge badge-green">Active</span></td><td style="color:#4ade80">$1,188</td></tr>
+      <tr><td style="font-weight:500">Nils Vilnis</td><td style="color:#64748b">nvilnis@gmail.com</td><td><span class="badge badge-gray">🇱🇻 LV</span></td><td style="color:#f87171;font-weight:600">$99.00</td><td><span style="color:#f87171">Apr 28 ⚠️</span></td><td><span class="badge badge-red">Past Due</span></td><td style="color:#f87171">$1,188</td></tr>
+      <tr><td style="font-weight:500">Vincent Lam</td><td style="color:#64748b">vincent.lam@pacificphotobooths.com</td><td><span class="badge badge-gray">🇺🇸 US</span></td><td style="color:#4ade80;font-weight:600">$0.99</td><td>May 20, 2026</td><td><span class="badge badge-green">Active</span></td><td style="color:#64748b">$12</td></tr>
+    </tbody></table>
+  </div>
+  <div class="card">
+    <div style="padding:16px 16px 10px;font-size:13px;font-weight:600;color:#94a3b8">Recent Stripe Transactions</div>
+    <table><thead><tr><th>Date</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead>
+    <tbody id="stripe-transactions"></tbody></table>
+  </div>
+</div>
+
+<!-- ===== CALENDAR ===== -->
+<div id="page-calendar" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div><h1 style="font-size:22px;font-weight:700">Payment Calendar</h1>
+    <div style="color:#475569;font-size:13px;margin-top:2px">All due dates, Stripe billings, and reminders</div></div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="btn btn-secondary btn-sm" onclick="calNav(-1)">← Prev</button>
+      <span id="cal-title" style="font-size:15px;font-weight:600;min-width:140px;text-align:center"></span>
+      <button class="btn btn-secondary btn-sm" onclick="calNav(1)">Next →</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:16px;margin-bottom:16px;font-size:12px;flex-wrap:wrap">
+    <span style="display:flex;align-items:center;gap:5px"><span class="cal-event ev-red" style="margin:0">●</span> Overdue</span>
+    <span style="display:flex;align-items:center;gap:5px"><span class="cal-event ev-amber" style="margin:0">●</span> Due soon</span>
+    <span style="display:flex;align-items:center;gap:5px"><span class="cal-event ev-violet" style="margin:0">●</span> Upcoming bill</span>
+    <span style="display:flex;align-items:center;gap:5px"><span class="cal-event ev-blue" style="margin:0">●</span> Stripe billing</span>
+    <span style="display:flex;align-items:center;gap:5px"><span class="cal-event ev-green" style="margin:0">●</span> Stripe payout</span>
+  </div>
+  <div class="card" style="padding:16px">
+    <div class="cal-grid" style="margin-bottom:6px">
+      <div class="cal-head">Sun</div><div class="cal-head">Mon</div><div class="cal-head">Tue</div>
+      <div class="cal-head">Wed</div><div class="cal-head">Thu</div><div class="cal-head">Fri</div><div class="cal-head">Sat</div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+  <div id="cal-day-detail" style="display:none;margin-top:14px" class="card">
+    <div style="padding:16px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:10px" id="cal-detail-title"></div>
+      <div id="cal-detail-events"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== REPORTS ===== -->
+<div id="page-reports" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div><h1 style="font-size:22px;font-weight:700">Financial Reports</h1>
+    <div style="color:#475569;font-size:13px;margin-top:2px">Generate PDF and Excel for your accountant</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:320px 1fr;gap:20px">
+    <div>
+      <div class="card" style="padding:20px;margin-bottom:14px">
+        <div style="font-size:14px;font-weight:600;color:#94a3b8;margin-bottom:16px">Report Settings</div>
+        <div style="margin-bottom:12px"><label>Report Period</label>
+          <select id="report-period" onchange="updateReportPreview()">
+            <option value="current-month">Current Month (April 2026)</option>
+            <option value="last-month">Last Month (March 2026)</option>
+            <option value="q1-2026">Q1 2026 (Jan–Mar)</option>
+            <option value="ytd">Year to Date 2026</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+        <div id="custom-range" style="display:none">
+          <div style="margin-bottom:12px"><label>From</label><input type="date" id="report-from"></div>
+          <div style="margin-bottom:12px"><label>To</label><input type="date" id="report-to"></div>
+        </div>
+        <div style="margin-bottom:12px"><label>Include Sections</label>
+          <div style="margin-top:6px;display:flex;flex-direction:column;gap:6px;font-size:13px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8"><input type="checkbox" checked id="rpt-expenses"> Expense Report</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8"><input type="checkbox" checked id="rpt-payments"> Payments Due</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8"><input type="checkbox" checked id="rpt-stripe"> Stripe Revenue</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8"><input type="checkbox" checked id="rpt-summary"> Executive Summary</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8"><input type="checkbox" id="rpt-tax"> Tax Estimate (25% net)</label>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:20px">
+        <div style="font-size:14px;font-weight:600;color:#94a3b8;margin-bottom:16px">Export</div>
+        <div style="margin-bottom:14px">
+          <label>Report Language</label>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button id="lang-en" class="btn btn-primary" style="flex:1;justify-content:center;font-size:13px" onclick="setReportLang('en')">🇺🇸 English</button>
+            <button id="lang-he" class="btn btn-secondary" style="flex:1;justify-content:center;font-size:13px" onclick="setReportLang('he')">🇮🇱 עברית</button>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-bottom:10px;justify-content:center" onclick="exportPDF()">📄 Download PDF Report</button>
+        <button class="btn btn-success" style="width:100%;justify-content:center" onclick="exportExcel()">📊 Download Excel Workbook</button>
+        <div style="margin-top:12px;font-size:11px;color:#374151;text-align:center">Formatted for accountant delivery</div>
+      </div>
+    </div>
+    <div class="card" style="padding:24px">
+      <div style="font-size:14px;font-weight:600;color:#94a3b8;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+        <span>Report Preview</span><span class="badge badge-gray" id="report-period-label">April 2026</span>
+      </div>
+      <div id="report-preview"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS ===== -->
+<div id="page-settings" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div><h1 style="font-size:22px;font-weight:700">Settings & Budgets</h1>
+    <div style="color:#475569;font-size:13px;margin-top:2px">Configure OCR, budget targets, and prior year data</div></div>
+    <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+    <!-- OCR / API Key -->
+    <div class="card" style="padding:22px">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">🔍 Receipt OCR (Claude AI)</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:16px">Upload a receipt and Claude will automatically extract the vendor, amount, date, and category.</div>
+      <div style="margin-bottom:14px">
+        <label>Anthropic API Key</label>
+        <input type="password" id="settings-api-key" placeholder="sk-ant-api03-..." autocomplete="off">
+        <div style="font-size:11px;color:#374151;margin-top:6px">Stored locally only. Used only for receipt scanning.</div>
+      </div>
+      <div id="ocr-key-status" style="font-size:12px"></div>
+    </div>
+
+    <!-- P&L / YoY -->
+    <div class="card" style="padding:22px">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">📈 Prior Year P&amp;L (for YoY)</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:16px">Enter last year's April figures to calculate year-over-year growth on the dashboard.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><label>Prior Year Revenue (Apr 2025)</label><input type="number" id="settings-py-revenue" placeholder="0.00" step="0.01"></div>
+        <div><label>Prior Year Expenses (Apr 2025)</label><input type="number" id="settings-py-expenses" placeholder="0.00" step="0.01"></div>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:#475569" id="yoy-preview"></div>
+    </div>
+
+    <!-- Make.com Invoice Inbox -->
+    <div class="card" style="padding:22px">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">📥 Invoice Inbox (Make.com)</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:16px">API key used to fetch invoices from your Make.com data store. Get it from Make.com → Profile → API.</div>
+      <div style="margin-bottom:14px">
+        <label>Make.com API Key</label>
+        <input type="password" id="settings-make-key" placeholder="your-make-api-key" autocomplete="off">
+        <div style="font-size:11px;color:#374151;margin-top:6px">Stored locally. Needs data store read permission.</div>
+      </div>
+      <div id="make-key-status" style="font-size:12px"></div>
+    </div>
+
+    <!-- Sumit Integration -->
+    <div class="card" style="padding:22px">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">🇮🇱 Sumit Recurring Revenue</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:16px">Israeli billing provider. Enter your credentials to pull recurring revenue alongside Stripe on the dashboard.</div>
+      <div style="display:grid;gap:10px">
+        <div>
+          <label>Sumit Company ID</label>
+          <input type="text" id="settings-sumit-company" placeholder="e.g. 12345">
+        </div>
+        <div>
+          <label>Sumit API Key</label>
+          <input type="password" id="settings-sumit-key" placeholder="your-sumit-api-key" autocomplete="off">
+        </div>
+        <div>
+          <label>🇮🇱 Israeli Revenue This Month (₪ gross, VAT-inclusive)</label>
+          <input type="number" id="settings-sumit-ils" placeholder="e.g. 5900" step="0.01" min="0">
+          <div style="font-size:11px;color:#475569;margin-top:4px">Enter the gross total your Israeli clients paid (incl. 18% VAT). The report will show the VAT split automatically.</div>
+        </div>
+      </div>
+      <div id="sumit-status" style="font-size:12px;margin-top:10px"></div>
+      <div style="font-size:12px;color:#475569;margin-top:10px;padding:10px;background:#0d0d1a;border-radius:6px">
+        ⚠️ <b>CORS note:</b> Sumit direct API calls from the browser are blocked by CORS. Use the manual ILS field above for now, or deploy to Vercel (ask for the proxy setup).
+      </div>
+    </div>
+
+    <!-- Receipt Drag-and-Drop Webhook -->
+    <div class="card" style="padding:22px">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">📎 Receipt Auto-Import Webhook</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:16px">Drop a receipt on the Expenses page and it goes straight into your Make.com Google Drive pipeline (scenario 8661383).</div>
+      <label>Make.com Webhook URL</label>
+      <input type="text" id="settings-receipt-webhook" placeholder="https://hook.eu2.make.com/...">
+      <div style="font-size:11px;color:#475569;margin-top:6px">In Make.com: create a new scenario → Webhook (Custom) trigger → copy the URL here. Then connect it to upload files to your Drive folder <code style="color:#a78bfa">1tX6ulTc1RGR...</code> — existing automation runs automatically.</div>
+    </div>
+
+    <!-- Budget targets -->
+    <div class="card" style="padding:22px;grid-column:1/-1">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">🎯 Monthly Budget Targets</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:16px">Set a monthly spending limit per category. Over-budget categories appear as warnings on the dashboard and expenses page.</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px" id="budget-inputs"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== INVOICE INBOX ===== -->
+<div id="page-inbox" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <h1 style="font-size:22px;font-weight:700">📥 Invoice Inbox</h1>
+      <div style="color:#475569;font-size:13px;margin-top:2px">Supplier invoices auto-OCR'd and stored via Make.com</div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary" onclick="fetchInvoiceInbox()">↻ Refresh</button>
+      <button class="btn btn-primary" onclick="openModal('expense-modal')">+ Add Expense</button>
+    </div>
+  </div>
+
+  <!-- Supplier instructions -->
+  <div class="alert" style="background:#0d0b1f;border:1px solid #4c1d95;margin-bottom:20px">
+    <div style="font-size:20px">📨</div>
+    <div>
+      <div style="font-weight:600;color:#c4b5fd;margin-bottom:4px">Tell your suppliers to email invoices to:</div>
+      <div style="font-size:18px;font-weight:700;color:#a78bfa;letter-spacing:.02em">hello@magipic.ai</div>
+      <div style="font-size:12px;color:#64748b;margin-top:4px">Invoices with PDF or image attachments are automatically scanned, categorised, and stored. You'll be notified by email and Slack.</div>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
+    <div class="card kpi">
+      <div class="kpi-label">Total Invoices</div>
+      <div class="kpi-value" id="inbox-count" style="color:#a78bfa">—</div>
+      <div class="kpi-sub">All time</div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-label">Pending</div>
+      <div class="kpi-value" id="inbox-pending" style="color:#fbbf24">—</div>
+      <div class="kpi-sub">Awaiting payment</div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-label">Total Value</div>
+      <div class="kpi-value" id="inbox-total" style="color:#f87171">—</div>
+      <div class="kpi-sub">Sum of all invoices</div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-label">Last Received</div>
+      <div class="kpi-value" id="inbox-last" style="font-size:16px;color:#94a3b8">—</div>
+      <div class="kpi-sub">Most recent invoice</div>
+    </div>
+  </div>
+
+  <!-- Make.com key prompt -->
+  <div id="inbox-key-prompt" class="alert alert-amber" style="margin-bottom:16px;display:none">
+    <div>⚙️</div>
+    <div style="font-size:13px">No Make.com API key set. <span style="color:#a78bfa;cursor:pointer;font-weight:600" onclick="showPage('settings')">Add it in Settings →</span> to load invoices from the inbox.</div>
+  </div>
+
+  <!-- Invoice table -->
+  <div class="card">
+    <div style="padding:16px 16px 10px;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13px;font-weight:600;color:#94a3b8">Received Invoices</span>
+      <div style="display:flex;gap:8px">
+        <select id="inbox-filter-status" style="width:auto;font-size:12px;padding:5px 10px" onchange="renderInboxTable()">
+          <option value="">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="paid">Paid</option>
+          <option value="overdue">Overdue</option>
+        </select>
+      </div>
+    </div>
+    <div id="inbox-table-wrap">
+      <div id="inbox-empty" style="padding:40px;text-align:center;color:#374151">
+        <div style="font-size:32px;margin-bottom:12px">📭</div>
+        <div style="font-weight:600;margin-bottom:6px;color:#64748b">No invoices yet</div>
+        <div style="font-size:12px">Add your Make.com API key in Settings, then click Refresh. Or wait for a supplier to email hello@magipic.ai.</div>
+      </div>
+      <table id="inbox-table" style="display:none">
+        <thead><tr>
+          <th>Date</th><th>Vendor</th><th>Invoice #</th><th>Amount</th><th>Due Date</th><th>Category</th><th>Status</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="inbox-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Setup status -->
+  <div class="card" style="padding:20px;margin-top:14px">
+    <div style="font-size:14px;font-weight:600;margin-bottom:14px;color:#94a3b8">⚙️ Automation Status</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;font-size:13px">
+      <div style="background:#052e16;border:1px solid #065f46;border-radius:10px;padding:14px">
+        <div style="color:#4ade80;font-weight:700;margin-bottom:4px">✅ Make.com Scenario</div>
+        <div style="color:#64748b;font-size:12px">ID 9145594 — runs every 15 min, watches hello@magipic.ai inbox</div>
+      </div>
+      <div style="background:#052e16;border:1px solid #065f46;border-radius:10px;padding:14px">
+        <div style="color:#4ade80;font-weight:700;margin-bottom:4px">✅ Data Store Ready</div>
+        <div style="color:#64748b;font-size:12px">Magipic Invoice Inbox (ID 160891) — stores all parsed invoice data</div>
+      </div>
+      <div id="inbox-activate-status" style="background:#1a0f03;border:1px solid #451a03;border-radius:10px;padding:14px">
+        <div style="color:#fbbf24;font-weight:700;margin-bottom:4px">⚠️ Action Required</div>
+        <div style="color:#64748b;font-size:12px">Open Make.com, find scenario <b style="color:#fbbf24">Magipic Invoice Inbox</b>, set your Anthropic API key in module 4 (HTTP), then activate it.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- ===== EXPENSE MODAL ===== -->
+<div class="modal-overlay" id="expense-modal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h2 style="font-size:16px;font-weight:700">Add Expense</h2>
+      <button onclick="closeModal('expense-modal')" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:18px">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div><label>Date *</label><input type="date" id="exp-date"></div>
+      <div><label>Amount (USD) *</label><input type="number" id="exp-amount" placeholder="0.00" step="0.01"></div>
+      <div><label>Vendor / Payee *</label><input type="text" id="exp-vendor" placeholder="e.g. AWS, Google"></div>
+      <div><label>Category *</label>
+        <select id="exp-category">
+          <option value="">Select category...</option>
+          <option>Infrastructure & Hosting</option><option>Software & SaaS</option>
+          <option>Marketing & Advertising</option><option>Professional Services</option>
+          <option>Payment Processing</option><option>Office & Admin</option>
+          <option>Travel & Entertainment</option><option>Equipment</option>
+          <option>Insurance</option><option>Taxes & Fees</option><option>Other</option>
+        </select>
+      </div>
+      <div style="grid-column:1/-1"><label>Description</label><input type="text" id="exp-desc" placeholder="Brief description"></div>
+      <div style="grid-column:1/-1"><label>Notes</label><textarea id="exp-notes" rows="2" placeholder="Additional notes for accountant..."></textarea></div>
+      <div style="grid-column:1/-1">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <label style="margin:0">Receipt</label>
+          <span id="ocr-key-hint" style="font-size:11px;color:#7c3aed;cursor:pointer" onclick="closeModal('expense-modal');showPage('settings')"></span>
+        </div>
+        <div class="drag-zone" id="drag-zone" onclick="document.getElementById('receipt-file').click()"
+          ondragover="event.preventDefault();this.classList.add('over')"
+          ondragleave="this.classList.remove('over')"
+          ondrop="handleDrop(event)">
+          <div id="drag-text">📎 Click to upload or drag & drop<br><span style="font-size:11px;color:#374151">JPG, PNG up to 5MB — auto-scanned with Claude</span></div>
+          <img id="receipt-preview" style="display:none;max-height:80px;border-radius:6px;margin-top:10px">
+        </div>
+        <input type="file" id="receipt-file" accept="image/*" style="display:none" onchange="handleReceiptUpload(this)">
+        <!-- OCR status -->
+        <div class="ocr-loading" id="ocr-loading">
+          <div class="ocr-spinner"></div>
+          <span style="font-size:13px;color:#a78bfa">Scanning receipt with Claude...</span>
+        </div>
+        <div class="ocr-result" id="ocr-result">
+          <div style="color:#4ade80;font-weight:600;margin-bottom:6px">✨ Receipt scanned — fields auto-filled</div>
+          <div id="ocr-result-detail" style="color:#94a3b8"></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-secondary" onclick="closeModal('expense-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveExpense()">Save Expense</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAYMENT MODAL ===== -->
+<div class="modal-overlay" id="payment-modal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h2 style="font-size:16px;font-weight:700">Add Payment Due</h2>
+      <button onclick="closeModal('payment-modal')" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:18px">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div><label>Due Date *</label><input type="date" id="pay-date"></div>
+      <div><label>Amount (USD) *</label><input type="number" id="pay-amount" placeholder="0.00" step="0.01"></div>
+      <div><label>Vendor / Payee *</label><input type="text" id="pay-vendor" placeholder="e.g. AWS"></div>
+      <div><label>Category</label>
+        <select id="pay-category"><option value="">Select...</option>
+          <option>Infrastructure & Hosting</option><option>Software & SaaS</option>
+          <option>Marketing & Advertising</option><option>Professional Services</option>
+          <option>Payment Processing</option><option>Office & Admin</option>
+          <option>Travel & Entertainment</option><option>Equipment</option>
+          <option>Insurance</option><option>Taxes & Fees</option><option>Other</option>
+        </select>
+      </div>
+      <div style="grid-column:1/-1"><label>Description</label><input type="text" id="pay-desc" placeholder="What is this payment for?"></div>
+      <div><label>Recurring?</label>
+        <select id="pay-recurring"><option value="false">One-time</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="annually">Annually</option></select>
+      </div>
+      <div><label>Status</label>
+        <select id="pay-status"><option value="upcoming">Upcoming</option><option value="due-soon">Due Soon</option><option value="overdue">Overdue</option></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-secondary" onclick="closeModal('payment-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePayment()">Save Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RECEIPT VIEWER ===== -->
+<div class="modal-overlay" id="receipt-modal">
+  <div class="modal" style="text-align:center">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <span style="font-weight:600">Receipt</span>
+      <button onclick="closeModal('receipt-modal')" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:18px">✕</button>
+    </div>
+    <img id="receipt-view-img" style="max-width:100%;max-height:70vh;border-radius:8px">
+  </div>
+</div>
+
+<!-- CSV Import Modal -->
+<div class="modal-overlay" id="csv-modal">
+  <div class="modal" style="width:700px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <span style="font-size:16px;font-weight:700">📊 Import Bank / Credit Card Statement</span>
+      <button onclick="closeModal('csv-modal')" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:18px">✕</button>
+    </div>
+    <div id="csv-column-mapper" style="margin-bottom:16px"></div>
+    <div id="csv-preview-table" style="max-height:280px;overflow-y:auto;margin-bottom:16px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('csv-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmCSVImport()">Import Selected Rows</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== CONSTANTS =====================
+const STORAGE_KEY = 'magipic_finance_v3';
+const CAT_COLORS = {
+  'Infrastructure & Hosting':'#3b82f6','Software & SaaS':'#8b5cf6',
+  'Marketing & Advertising':'#ec4899','Professional Services':'#10b981',
+  'Payment Processing':'#f59e0b','Office & Admin':'#6366f1',
+  'Travel & Entertainment':'#ef4444','Equipment':'#14b8a6',
+  'Insurance':'#f97316','Taxes & Fees':'#84cc16','Other':'#6b7280'
+};
+const ALL_CATS = Object.keys(CAT_COLORS);
+const DEFAULT_BUDGETS = {
+  'Infrastructure & Hosting':200,'Software & SaaS':250,'Marketing & Advertising':300,
+  'Professional Services':250,'Payment Processing':80,'Office & Admin':100,
+  'Travel & Entertainment':150,'Equipment':100,'Insurance':80,'Taxes & Fees':150,'Other':100
+};
+
+// ===================== DATA =====================
+const DEFAULT_EXPENSES = [];
+const DEFAULT_PAYMENTS = [];
+// Demo IDs that existed in old versions — purge them from localStorage on load
+const DEMO_IDS = new Set(['e1','e2','e3','e4','e5','e6','e7','e8','e9','e10','e11','e12','e13','e14','e15','e16','e17','e18','e19','e20','p1','p2','p3','p4','p5','p6','p7','p8','p9','p10']);
+const STRIPE_TX = [
+  {date:'2026-04-27',customer:'Solodigitalis Inc',amount:1200.00,status:'succeeded'},
+  {date:'2026-04-10',customer:'Solodigitalis Inc',amount:1200.00,status:'succeeded'},
+  {date:'2026-04-08',customer:'One-time sale',amount:1747.35,status:'succeeded'},
+  {date:'2026-04-07',customer:'Nils Vilnis',amount:99.00,status:'failed'},
+  {date:'2026-03-28',customer:'Solodigitalis Inc',amount:1200.00,status:'succeeded'},
+  {date:'2026-03-25',customer:'One-time sale',amount:1800.00,status:'succeeded'},
+  {date:'2026-03-20',customer:'One-time sale',amount:1314.50,status:'succeeded'},
+  {date:'2026-03-15',customer:'Miklos Gergely',amount:49.50,status:'succeeded'},
+  {date:'2026-03-15',customer:'Nils Vilnis',amount:99.00,status:'succeeded'},
+  {date:'2026-03-10',customer:'Vincent Lam',amount:0.99,status:'succeeded'},
+  {date:'2026-02-28',customer:'One-time sale',amount:419.00,status:'succeeded'},
+  {date:'2026-02-25',customer:'Aranit Allkja',amount:99.00,status:'succeeded'},
+  {date:'2026-02-20',customer:'One-time sale',amount:500.00,status:'succeeded'},
+  {date:'2026-02-15',customer:'One-time sale',amount:2603.00,status:'succeeded'},
+  {date:'2026-02-10',customer:'Miklos Gergely',amount:49.50,status:'succeeded'},
+];
+
+// ===================== STATE =====================
+let data = {expenses:[],payments:[],settings:{anthropicKey:'',pyRevenue:'',pyExpenses:'',makeApiKey:'',sumitCompanyId:'',sumitApiKey:''},budgets:{}};
+let inboxRecords = [], inboxFiltered = [];
+let currentPage = 'dashboard', pendingReceipt = null, paymentFilter = 'all';
+let calYear = 2026, calMonth = 3, charts = {};
+
+function loadData() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    data = JSON.parse(saved);
+    // Purge any old demo data that was previously auto-saved
+    const hadDemo = data.expenses?.some(e => DEMO_IDS.has(e.id)) || data.payments?.some(p => DEMO_IDS.has(p.id));
+    if (hadDemo) {
+      data.expenses = (data.expenses || []).filter(e => !DEMO_IDS.has(e.id));
+      data.payments = (data.payments || []).filter(p => !DEMO_IDS.has(p.id));
+      saveData();
+    }
+  }
+  else { data = {expenses:[],payments:[],settings:{anthropicKey:'',pyRevenue:'',pyExpenses:''},budgets:{...DEFAULT_BUDGETS}}; saveData(); }
+  if (!data.settings) data.settings = {};
+  data.settings.anthropicKey = data.settings.anthropicKey || '';
+  data.settings.pyRevenue = data.settings.pyRevenue || '';
+  data.settings.pyExpenses = data.settings.pyExpenses || '';
+  data.settings.makeApiKey = data.settings.makeApiKey || '';
+  data.settings.sumitCompanyId = data.settings.sumitCompanyId || '';
+  data.settings.sumitApiKey = data.settings.sumitApiKey || '';
+  data.settings.receiptWebhookUrl = data.settings.receiptWebhookUrl || '';
+  if (!data.budgets || !Object.keys(data.budgets).length) data.budgets = {...DEFAULT_BUDGETS};
+}
+function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+// ===================== UTILS =====================
+const fmt = n => '$' + (+n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+const fmtDate = s => { if(!s)return''; const [y,m,d]=s.split('-'); return new Date(+y,+m-1,+d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
+const uid = () => Math.random().toString(36).slice(2,10);
+const today = () => new Date().toISOString().split('T')[0];
+
+// ===================== NAV =====================
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+name+"'"))n.classList.add('active');});
+  currentPage = name;
+  if(name==='dashboard')renderDashboard();
+  if(name==='expenses')renderExpenses();
+  if(name==='payments')renderPayments();
+  if(name==='stripe')renderStripe();
+  if(name==='calendar')renderCalendar();
+  if(name==='reports')updateReportPreview();
+  if(name==='settings')renderSettings();
+  if(name==='inbox')fetchInvoiceInbox();
+}
+
+// ===================== MODALS =====================
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if(id==='expense-modal'){
+    document.getElementById('exp-date').value=today();
+    pendingReceipt=null;
+    document.getElementById('receipt-preview').style.display='none';
+    document.getElementById('drag-text').style.display='block';
+    document.getElementById('ocr-loading').style.display='none';
+    document.getElementById('ocr-result').style.display='none';
+    const hasKey = !!(data.settings?.anthropicKey?.trim());
+    document.getElementById('ocr-key-hint').textContent = hasKey ? '✨ OCR enabled' : '⚙️ Add API key to enable OCR';
+  }
+  if(id==='payment-modal')document.getElementById('pay-date').value=today();
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+window.onclick=e=>{if(e.target.classList.contains('modal-overlay'))e.target.classList.remove('open');};
+
+// ===================== OCR =====================
+async function ocrReceipt(base64, mimeType) {
+  const apiKey = (data.settings?.anthropicKey||'').trim();
+  if(!apiKey) return null;
+  const res = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':apiKey,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body:JSON.stringify({
+      model:'claude-3-5-haiku-20241022',
+      max_tokens:400,
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:mimeType||'image/jpeg',data:base64.split(',')[1]}},
+        {type:'text',text:`Extract receipt data. Return ONLY a JSON object:
+{"vendor":"business name","amount":0.00,"date":"YYYY-MM-DD","category":"one of: Infrastructure & Hosting|Software & SaaS|Marketing & Advertising|Professional Services|Payment Processing|Office & Admin|Travel & Entertainment|Equipment|Insurance|Taxes & Fees|Other","description":"1-line description"}
+If a field is unclear use null. Amount must be a number.`}
+      ]}]
+    })
+  });
+  if(!res.ok) throw new Error('API '+res.status);
+  const j = await res.json();
+  const txt = j.content[0].text;
+  const m = txt.match(/\{[\s\S]*?\}/);
+  if(!m) throw new Error('No JSON in response');
+  return JSON.parse(m[0]);
+}
+
+// ===================== RECEIPT HANDLING =====================
+async function handleReceiptUpload(input) {
+  const file = input.files[0]; if(!file) return;
+  if(file.size>5*1024*1024){alert('File too large (max 5MB)');return;}
+  const reader = new FileReader();
+  reader.onload = async e => {
+    pendingReceipt = e.target.result;
+    const prev = document.getElementById('receipt-preview');
+    prev.src = pendingReceipt; prev.style.display='block';
+    document.getElementById('drag-text').style.display='none';
+    const hasKey = !!(data.settings?.anthropicKey?.trim());
+    if(hasKey) {
+      document.getElementById('ocr-loading').style.display='flex';
+      document.getElementById('ocr-result').style.display='none';
+      try {
+        const result = await ocrReceipt(pendingReceipt, file.type);
+        document.getElementById('ocr-loading').style.display='none';
+        if(result) {
+          if(result.vendor) document.getElementById('exp-vendor').value=result.vendor;
+          if(result.amount) document.getElementById('exp-amount').value=result.amount;
+          if(result.date) document.getElementById('exp-date').value=result.date;
+          if(result.category){const sel=document.getElementById('exp-category');for(let o of sel.options)if(o.value===result.category){sel.value=result.category;break;}}
+          if(result.description) document.getElementById('exp-desc').value=result.description;
+          document.getElementById('ocr-result').style.display='block';
+          document.getElementById('ocr-result-detail').textContent=`Vendor: ${result.vendor||'?'} · Amount: ${result.amount?fmt(result.amount):'?'} · Date: ${result.date||'?'} · Category: ${result.category||'?'}`;
+        }
+      } catch(err) {
+        document.getElementById('ocr-loading').style.display='none';
+        document.getElementById('ocr-result').style.display='block';
+        document.getElementById('ocr-result').style.background='#1f0808';
+        document.getElementById('ocr-result').style.borderColor='#450a0a';
+        document.getElementById('ocr-result-detail').innerHTML='<span style="color:#f87171">Scan failed: '+err.message+'. Fill fields manually.</span>';
+      }
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drag-zone').classList.remove('over');
+  const file = e.dataTransfer.files[0]; if(!file) return;
+  if(file.size>5*1024*1024){alert('File too large');return;}
+  const dt=new DataTransfer(); dt.items.add(file);
+  const fi=document.getElementById('receipt-file'); fi.files=dt.files;
+  handleReceiptUpload(fi);
+}
+
+function handleQuickUpload(input) {
+  const file=input.files[0]; if(!file) return;
+  openModal('expense-modal');
+  setTimeout(()=>{const fi=document.getElementById('receipt-file');const dt=new DataTransfer();dt.items.add(file);fi.files=dt.files;handleReceiptUpload(fi);},150);
+}
+
+function viewReceipt(dataUrl){document.getElementById('receipt-view-img').src=dataUrl;openModal('receipt-modal');}
+
+// ===================== EXPENSE CRUD =====================
+function saveExpense() {
+  const date=document.getElementById('exp-date').value;
+  const amount=parseFloat(document.getElementById('exp-amount').value);
+  const vendor=document.getElementById('exp-vendor').value.trim();
+  const category=document.getElementById('exp-category').value;
+  const desc=document.getElementById('exp-desc').value.trim();
+  const notes=document.getElementById('exp-notes').value.trim();
+  if(!date||!amount||!vendor||!category){alert('Fill in date, amount, vendor, and category.');return;}
+  data.expenses.unshift({id:uid(),date,vendor,description:desc,category,amount,receipt:pendingReceipt,notes});
+  saveData(); closeModal('expense-modal');
+  ['exp-date','exp-amount','exp-vendor','exp-desc','exp-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('exp-category').value=''; pendingReceipt=null;
+  if(currentPage==='expenses')renderExpenses(); else renderDashboard();
+}
+function deleteExpense(id){if(!confirm('Delete this expense?'))return;data.expenses=data.expenses.filter(e=>e.id!==id);saveData();renderExpenses();}
+
+// ===================== PAYMENT CRUD =====================
+function savePayment() {
+  const dueDate=document.getElementById('pay-date').value;
+  const amount=parseFloat(document.getElementById('pay-amount').value);
+  const vendor=document.getElementById('pay-vendor').value.trim();
+  const category=document.getElementById('pay-category').value;
+  const desc=document.getElementById('pay-desc').value.trim();
+  const recurring=document.getElementById('pay-recurring').value;
+  const status=document.getElementById('pay-status').value;
+  if(!dueDate||!amount||!vendor){alert('Fill in date, amount, and vendor.');return;}
+  data.payments.push({id:uid(),dueDate,vendor,description:desc,category,amount,status,recurring});
+  saveData(); closeModal('payment-modal'); renderPayments();
+}
+function deletePayment(id){if(!confirm('Delete?'))return;data.payments=data.payments.filter(p=>p.id!==id);saveData();renderPayments();}
+function markPaid(id){const p=data.payments.find(p=>p.id===id);if(p){p.status='paid';saveData();renderPayments();}}
+
+// ===================== SETTINGS =====================
+function renderSettings() {
+  document.getElementById('settings-api-key').value = data.settings.anthropicKey||'';
+  document.getElementById('settings-py-revenue').value = data.settings.pyRevenue||'';
+  document.getElementById('settings-py-expenses').value = data.settings.pyExpenses||'';
+  document.getElementById('settings-make-key').value = data.settings.makeApiKey||'';
+  document.getElementById('settings-sumit-company').value = data.settings.sumitCompanyId||'';
+  document.getElementById('settings-sumit-key').value = data.settings.sumitApiKey||'';
+  document.getElementById('settings-sumit-ils').value = data.settings.sumitIlsRevenue||'';
+  document.getElementById('settings-receipt-webhook').value = data.settings.receiptWebhookUrl||'';
+  const hasMake = !!(data.settings.makeApiKey?.trim());
+  document.getElementById('make-key-status').innerHTML = hasMake
+    ? '<span style="color:#4ade80">✅ Make.com key saved — Invoice Inbox enabled</span>'
+    : '<span style="color:#374151">No key set — Invoice Inbox will show empty</span>';
+  const hasSumit = !!(data.settings.sumitCompanyId?.trim() && data.settings.sumitApiKey?.trim());
+  document.getElementById('sumit-status').innerHTML = hasSumit
+    ? '<span style="color:#4ade80">✅ Sumit credentials saved</span>'
+    : '<span style="color:#374151">No credentials — Sumit revenue not shown</span>';
+  updateYoyPreview();
+  // Budget inputs
+  const container = document.getElementById('budget-inputs');
+  container.innerHTML = ALL_CATS.map(cat => {
+    const val = data.budgets[cat]||0;
+    const color = CAT_COLORS[cat]||'#6b7280';
+    return `<div style="background:#0d0d1a;border:1px solid #252540;border-radius:10px;padding:14px">
+      <div style="font-size:12px;font-weight:600;color:${color};margin-bottom:8px">${cat}</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="color:#64748b;font-size:12px">$</span>
+        <input type="number" data-cat="${cat}" value="${val}" placeholder="0" min="0" step="10" style="font-size:14px;font-weight:600" onchange="updateYoyPreview()">
+        <span style="color:#374151;font-size:12px">/mo</span>
+      </div>
+    </div>`;
+  }).join('');
+  const hasKey = !!(data.settings.anthropicKey?.trim());
+  document.getElementById('ocr-key-status').innerHTML = hasKey
+    ? '<span style="color:#4ade80">✅ API key saved — OCR enabled</span>'
+    : '<span style="color:#374151">No key set — upload receipts manually</span>';
+}
+
+function updateYoyPreview() {
+  const pyRev = parseFloat(document.getElementById('settings-py-revenue')?.value)||0;
+  const pyExp = parseFloat(document.getElementById('settings-py-expenses')?.value)||0;
+  const el = document.getElementById('yoy-preview');
+  if(!el) return;
+  if(!pyRev) { el.textContent=''; return; }
+  const pyNet = pyRev - pyExp;
+  const curNet = 4147.35 - 736.73;
+  const pct = pyNet > 0 ? ((curNet-pyNet)/pyNet*100).toFixed(1) : 'N/A';
+  el.innerHTML = `<span style="color:#64748b">Prior year net: </span><span style="color:#e2e8f0">${fmt(pyNet)}</span>&nbsp;→&nbsp;<span style="color:#4ade80">YoY: ${pct !== 'N/A' ? (pct>0?'+':'')+pct+'%' : 'N/A'}</span>`;
+}
+
+function saveSettings() {
+  data.settings.anthropicKey = document.getElementById('settings-api-key').value.trim();
+  data.settings.pyRevenue = document.getElementById('settings-py-revenue').value;
+  data.settings.pyExpenses = document.getElementById('settings-py-expenses').value;
+  data.settings.makeApiKey = document.getElementById('settings-make-key').value.trim();
+  data.settings.sumitCompanyId = document.getElementById('settings-sumit-company').value.trim();
+  data.settings.sumitApiKey = document.getElementById('settings-sumit-key').value.trim();
+  data.settings.sumitIlsRevenue = document.getElementById('settings-sumit-ils').value.trim();
+  data.settings.receiptWebhookUrl = document.getElementById('settings-receipt-webhook').value.trim();
+  document.querySelectorAll('#budget-inputs input[data-cat]').forEach(inp => {
+    data.budgets[inp.dataset.cat] = parseFloat(inp.value)||0;
+  });
+  saveData();
+  renderSettings();
+  const btn = event.target; btn.textContent='✅ Saved!';
+  setTimeout(()=>btn.textContent='Save Settings', 2000);
+}
+
+// ===================== INVOICE INBOX =====================
+async function fetchInvoiceInbox() {
+  const apiKey = data.settings.makeApiKey?.trim();
+  const promptEl = document.getElementById('inbox-key-prompt');
+  if(!apiKey) {
+    if(promptEl) promptEl.style.display='flex';
+    renderInboxTable();
+    return;
+  }
+  if(promptEl) promptEl.style.display='none';
+  try {
+    const res = await fetch('https://eu2.make.com/api/v2/data-store-records?dataStoreId=160891&teamId=1766172&limit=100', {
+      headers: {'Authorization': 'Token '+apiKey}
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const json = await res.json();
+    inboxRecords = (json.records || []).map(r => ({
+      key: r.key,
+      ...r.data
+    }));
+    renderInboxTable();
+  } catch(e) {
+    inboxRecords = [];
+    renderInboxTable();
+    console.warn('Invoice Inbox fetch error:', e.message);
+  }
+}
+
+function renderInboxTable() {
+  const statusFilter = document.getElementById('inbox-filter-status')?.value || '';
+  const filtered = inboxRecords.filter(r => !statusFilter || r.status === statusFilter);
+  const total = inboxRecords.reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+  const pending = inboxRecords.filter(r=>r.status==='pending').length;
+  document.getElementById('inbox-count').textContent = inboxRecords.length || '0';
+  document.getElementById('inbox-pending').textContent = pending || '0';
+  document.getElementById('inbox-total').textContent = inboxRecords.length ? fmt(total) : '—';
+  const last = inboxRecords.sort((a,b)=>new Date(b.invoice_date||0)-new Date(a.invoice_date||0))[0];
+  document.getElementById('inbox-last').textContent = last?.invoice_date || '—';
+  const tbody = document.getElementById('inbox-tbody');
+  const table = document.getElementById('inbox-table');
+  const empty = document.getElementById('inbox-empty');
+  if(!filtered.length) {
+    table.style.display='none'; empty.style.display='block';
+    return;
+  }
+  table.style.display=''; empty.style.display='none';
+  inboxFiltered = filtered;
+  tbody.innerHTML = filtered.map((r,i) => {
+    const statusBadge = {pending:'badge-amber',paid:'badge-green',overdue:'badge-red'}[r.status]||'badge-gray';
+    return '<tr>'
+      + '<td>' + (r.invoice_date||'—') + '</td>'
+      + '<td><b>' + (r.vendor||r.sender_email||'Unknown') + '</b><br><span style="font-size:11px;color:#475569">' + (r.sender_email||'') + '</span></td>'
+      + '<td style="font-family:monospace;color:#94a3b8">' + (r.invoice_number||'—') + '</td>'
+      + '<td style="font-weight:600;color:#f87171">' + (r.currency||'USD') + ' ' + (r.amount?parseFloat(r.amount).toFixed(2):'—') + '</td>'
+      + '<td>' + (r.due_date||'—') + '</td>'
+      + '<td><span class="badge badge-blue">' + (r.category||'Other') + '</span></td>'
+      + '<td><span class="badge ' + statusBadge + '">' + (r.status||'pending') + '</span></td>'
+      + '<td><button class="btn btn-success btn-sm" onclick="importInboxAsExpense(' + i + ')">+ Expense</button>'
+      + ' <button class="btn btn-secondary btn-sm" onclick="markInboxPaid(' + i + ')">Paid</button></td>'
+      + '</tr>';
+  }).join('');
+}
+
+function importInboxAsExpense(i) {
+  const r = inboxFiltered[i]; if(!r) return;
+  openModal('expense-modal');
+  setTimeout(function() {
+    document.getElementById('exp-date').value = r.invoice_date || new Date().toISOString().slice(0,10);
+    document.getElementById('exp-amount').value = r.amount || '';
+    document.getElementById('exp-vendor').value = r.vendor || r.sender_email || '';
+    document.getElementById('exp-category').value = r.category || '';
+    document.getElementById('exp-desc').value = r.description || r.invoice_number || '';
+  }, 50);
+}
+
+async function markInboxPaid(i) {
+  const r = inboxFiltered[i]; if(!r) return;
+  const apiKey = data.settings.makeApiKey?.trim();
+  if(!apiKey) { alert('No Make.com API key set.'); return; }
+  try {
+    await fetch('https://eu2.make.com/api/v2/data-store-records/' + encodeURIComponent(r.key) + '?dataStoreId=160891&teamId=1766172', {
+      method: 'PATCH',
+      headers: {'Authorization': 'Token ' + apiKey, 'Content-Type': 'application/json'},
+      body: JSON.stringify({data:{status:'paid'}})
+    });
+    await fetchInvoiceInbox();
+  } catch(e) {
+    console.warn('Mark paid error:', e.message);
+  }
+}
+
+async function testSumitConnection() {
+  const companyId = document.getElementById('settings-sumit-company').value.trim();
+  const apiKey = document.getElementById('settings-sumit-key').value.trim();
+  const statusEl = document.getElementById('sumit-status');
+  if(!companyId || !apiKey) { statusEl.innerHTML='<span style="color:#f87171">Enter Company ID and API Key first.</span>'; return; }
+  statusEl.innerHTML = '<span style="color:#94a3b8">Testing...</span>';
+  try {
+    const res = await fetch('/api/sumit', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({Credentials:{CompanyID:companyId,APIKey:apiKey},Parameters:{PageSize:1}})
+    });
+    const json = await res.json();
+    if(json.Status === 0 || json.Documents) {
+      statusEl.innerHTML = '<span style="color:#4ade80">✅ Connected to Sumit successfully!</span>';
+    } else {
+      statusEl.innerHTML = `<span style="color:#f87171">Error: ${json.ErrorMessage||'Check credentials'}</span>`;
+    }
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:#f87171">Connection failed — check credentials and CORS settings</span>`;
+  }
+}
+
+// ===================== DASHBOARD =====================
+function renderDashboard() {
+  document.getElementById('dashboard-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const thisMonth = '2026-04';
+  const lastMonth = '2026-03';
+  const mtdExp = data.expenses.filter(e=>e.date.startsWith(thisMonth)).reduce((s,e)=>s+e.amount,0);
+  const lastMtdExp = data.expenses.filter(e=>e.date.startsWith(lastMonth)).reduce((s,e)=>s+e.amount,0);
+  const mrr = 1398.99;
+  document.getElementById('kpi-mrr').textContent = fmt(mrr);
+  document.getElementById('kpi-expenses').textContent = fmt(mtdExp);
+  document.getElementById('kpi-expenses-sub').textContent = data.expenses.filter(e=>e.date.startsWith(thisMonth)).length+' transactions';
+  const net = mrr - mtdExp;
+  const netEl = document.getElementById('kpi-net');
+  netEl.textContent = (net<0?'-':'')+fmt(Math.abs(net));
+  netEl.style.color = net>=0?'#4ade80':'#f87171';
+
+  // P&L
+  const aprRev = 4147.35; // from Stripe data April
+  const marRev = 4463.99; // March
+  const aprNet = aprRev - mtdExp;
+  const marNet = marRev - lastMtdExp;
+  document.getElementById('kpi-exp-month').textContent = fmt(mtdExp);
+  const plEl = document.getElementById('kpi-pl-month');
+  plEl.textContent = (aprNet<0?'-':'')+fmt(Math.abs(aprNet));
+  plEl.className = 'kpi-value '+(aprNet>=0?'pl-up':'pl-down');
+  const momPct = marNet>0?((aprNet-marNet)/marNet*100).toFixed(1):null;
+  const momEl = document.getElementById('kpi-pl-mom');
+  if(momPct!==null) {
+    momEl.innerHTML = `vs Mar: <span class="${+momPct>=0?'pl-up':'pl-down'}" style="font-weight:600">${+momPct>=0?'+':''}${momPct}% MoM</span>`;
+  } else momEl.textContent='vs last month';
+
+  // YoY
+  const pyRev = parseFloat(data.settings?.pyRevenue)||0;
+  const pyExp = parseFloat(data.settings?.pyExpenses)||0;
+  const yoyEl = document.getElementById('kpi-pl-yoy');
+  const yoySubEl = document.getElementById('kpi-pl-yoy-sub');
+  if(pyRev) {
+    const pyNet = pyRev-pyExp;
+    const yoyPct = pyNet>0?((aprNet-pyNet)/pyNet*100).toFixed(1):null;
+    yoyEl.textContent = (aprNet<0?'-':'')+fmt(Math.abs(aprNet));
+    yoyEl.className = 'kpi-value '+(aprNet>=0?'pl-up':'pl-down');
+    yoySubEl.innerHTML = yoyPct!==null?`vs Apr 2025: <span style="color:${+yoyPct>=0?'#4ade80':'#f87171'};font-weight:600">${+yoyPct>=0?'+':''}${yoyPct}% YoY</span>`:'vs Apr 2025';
+    yoySubEl.style.cursor='default'; yoySubEl.onclick=null;
+  } else {
+    yoyEl.textContent='—'; yoyEl.className='kpi-value pl-neutral';
+    yoySubEl.textContent='Enter prior year data ↗';
+    yoySubEl.style.cursor='pointer'; yoySubEl.onclick=()=>showPage('settings');
+  }
+
+  // Alerts
+  const overdue=data.payments.filter(p=>p.status==='overdue');
+  let alertHtml='';
+  if(overdue.length) alertHtml+=`<div class="alert alert-red" style="margin-bottom:12px"><span>⚠️</span><div><b style="color:#f87171">${overdue.length} overdue payment${overdue.length>1?'s':''}</b><div style="font-size:12px;color:#f87171;opacity:.8;margin-top:2px">${overdue.map(p=>p.vendor+' '+fmt(p.amount)).join(' · ')}</div></div></div>`;
+  document.getElementById('dashboard-alerts').innerHTML=alertHtml;
+
+  // Budget warnings
+  renderBudgetWarnings();
+
+  // Recent expenses table
+  const recent=[...data.expenses].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
+  document.getElementById('dash-expenses-table').innerHTML=recent.map(e=>`
+    <tr><td style="color:#64748b">${fmtDate(e.date)}</td><td style="font-weight:500">${e.vendor}</td>
+    <td><span class="badge badge-gray" style="font-size:10px">${e.category}</span></td>
+    <td style="color:#fb923c;font-weight:600">${fmt(e.amount)}</td></tr>`).join('');
+
+  // Upcoming payments table
+  const upcoming=[...data.payments].filter(p=>p.status!=='paid').sort((a,b)=>a.dueDate.localeCompare(b.dueDate)).slice(0,6);
+  document.getElementById('dash-payments-table').innerHTML=upcoming.map(p=>{
+    const s=p.status==='overdue'?'badge-red':p.status==='due-soon'?'badge-amber':'badge-blue';
+    const sl=p.status==='overdue'?'Overdue':p.status==='due-soon'?'Due soon':'Upcoming';
+    return `<tr><td style="color:#64748b">${fmtDate(p.dueDate)}</td><td style="font-weight:500">${p.vendor}</td>
+    <td style="color:#fb923c;font-weight:600">${fmt(p.amount)}</td>
+    <td><span class="badge ${s}">${sl}</span></td></tr>`;}).join('');
+
+  // Revenue chart
+  destroyChart('revenue-chart');
+  charts['revenue-chart']=new Chart(document.getElementById('revenue-chart'),{
+    type:'bar',
+    data:{labels:['Nov','Dec','Jan','Feb','Mar','Apr'],datasets:[
+      {label:'Subscriptions',data:[0,0,0,1148.50,1249,1398.99],backgroundColor:'rgba(124,58,237,.7)',borderRadius:4,stack:'rev'},
+      {label:'One-time',data:[0,0,0,3571.50,3213.99,1747.35],backgroundColor:'rgba(14,165,233,.6)',borderRadius:4,stack:'rev'},
+      {label:'Expenses',data:[0,0,0,448,810.90,mtdExp],backgroundColor:'rgba(248,113,113,.5)',borderRadius:4,stack:'exp'},
+    ]},
+    options:{responsive:true,plugins:{legend:{labels:{color:'#64748b',font:{size:11}}}},scales:{x:{stacked:true,ticks:{color:'#475569'},grid:{color:'#1a1a30'}},y:{stacked:true,ticks:{color:'#475569',callback:v=>'$'+v.toLocaleString()},grid:{color:'#1a1a30'}}}}
+  });
+
+  renderPieChart('pie-chart-dash','pie-legend-dash',data.expenses);
+}
+
+// ===================== BUDGET WARNINGS =====================
+function renderBudgetWarnings() {
+  const thisMonth='2026-04';
+  const mtdByCat={};
+  data.expenses.filter(e=>e.date.startsWith(thisMonth)).forEach(e=>{
+    if(!mtdByCat[e.category])mtdByCat[e.category]=0;
+    mtdByCat[e.category]+=e.amount;
+  });
+  const overBudget=ALL_CATS.filter(cat=>{
+    const budget=data.budgets[cat]||0;
+    return budget>0 && (mtdByCat[cat]||0)>budget;
+  });
+  const el=document.getElementById('budget-warnings');
+  if(!el)return;
+  if(!overBudget.length){el.innerHTML='';return;}
+  el.innerHTML=`<div class="alert alert-amber" style="margin-bottom:14px">
+    <span style="font-size:18px">🎯</span>
+    <div style="flex:1">
+      <b style="color:#fbbf24">${overBudget.length} categor${overBudget.length>1?'ies':'y'} over budget this month</b>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+        ${overBudget.map(cat=>`<div style="background:#1a0f03;border:1px solid #451a03;border-radius:8px;padding:6px 10px;font-size:12px">
+          <span style="color:#fbbf24">${cat}</span>
+          <span style="color:#f87171;font-weight:700;margin-left:6px">${fmt(mtdByCat[cat]||0)}</span>
+          <span style="color:#64748b"> / ${fmt(data.budgets[cat])}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ===================== EXPENSES =====================
+function renderExpenses() {
+  const search=(document.getElementById('expense-search').value||'').toLowerCase();
+  const cat=document.getElementById('expense-cat-filter').value;
+  const month=document.getElementById('expense-month-filter').value;
+  // Populate filters
+  const catSel=document.getElementById('expense-cat-filter');
+  const cats=[...new Set(data.expenses.map(e=>e.category))].sort();
+  cats.forEach(c=>{if(![...catSel.options].map(o=>o.value).includes(c)){const o=document.createElement('option');o.value=c;o.textContent=c;catSel.appendChild(o);}});
+  const mSel=document.getElementById('expense-month-filter');
+  const months=[...new Set(data.expenses.map(e=>e.date.slice(0,7)))].sort().reverse();
+  months.forEach(m=>{if(![...mSel.options].map(o=>o.value).includes(m)){const o=document.createElement('option');o.value=m;const[y,mo]=m.split('-');o.textContent=new Date(+y,+mo-1).toLocaleDateString('en-US',{month:'long',year:'numeric'});mSel.appendChild(o);}});
+  let filtered=[...data.expenses].sort((a,b)=>b.date.localeCompare(a.date));
+  if(search)filtered=filtered.filter(e=>(e.vendor+e.description+e.category+e.notes).toLowerCase().includes(search));
+  if(cat)filtered=filtered.filter(e=>e.category===cat);
+  if(month)filtered=filtered.filter(e=>e.date.startsWith(month));
+  document.getElementById('expense-total-display').textContent=fmt(filtered.reduce((s,e)=>s+e.amount,0));
+  const tbody=document.getElementById('expense-table');
+  const empty=document.getElementById('expense-empty');
+  if(!filtered.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=filtered.map(e=>`
+    <tr>
+      <td style="color:#64748b;white-space:nowrap">${fmtDate(e.date)}</td>
+      <td style="font-weight:500">${e.vendor}</td>
+      <td style="color:#94a3b8">${e.description||'—'}</td>
+      <td><span class="badge badge-gray" style="font-size:10px;background:${CAT_COLORS[e.category]||'#374151'}22;color:${CAT_COLORS[e.category]||'#94a3b8'}">${e.category}</span></td>
+      <td style="font-weight:600;color:#fb923c">${fmt(e.amount)}</td>
+      <td>${e.receipt?`<img src="${e.receipt}" class="receipt-thumb" onclick="viewReceipt('${e.receipt}')">`:'<span style="color:#374151;font-size:12px">—</span>'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteExpense('${e.id}')">✕</button></td>
+    </tr>`).join('');
+  renderPieChart('pie-chart-expenses','pie-legend-expenses',data.expenses);
+  renderBudgetBreakdown();
+}
+
+function renderBudgetBreakdown() {
+  const thisMonth='2026-04';
+  const byCat={};
+  data.expenses.forEach(e=>{if(!byCat[e.category])byCat[e.category]=0;byCat[e.category]+=e.amount;});
+  const el=document.getElementById('budget-breakdown');
+  if(!el)return;
+  el.innerHTML=ALL_CATS.filter(cat=>byCat[cat]||data.budgets[cat]).map(cat=>{
+    const actual=byCat[cat]||0;
+    const budget=data.budgets[cat]||0;
+    const pct=budget>0?Math.min(actual/budget*100,100):100;
+    const over=budget>0&&actual>budget;
+    const color=over?'#ef4444':CAT_COLORS[cat]||'#6b7280';
+    return `<div class="budget-bar-wrap ${over?'over-budget':''}">
+      <div class="budget-label-row">
+        <span style="color:#94a3b8;font-size:12px">${cat}</span>
+        <span style="font-size:12px;color:${over?'#f87171':'#e2e8f0'}">${fmt(actual)}${budget?' / '+fmt(budget):''}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div>
+      ${over?`<div style="font-size:10px;color:#f87171;margin-top:3px">Over by ${fmt(actual-budget)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ===================== PAYMENTS =====================
+function filterPayments(f){
+  paymentFilter=f;
+  document.querySelectorAll('[id^="ptab-"]').forEach(b=>b.classList.remove('active'));
+  document.getElementById('ptab-'+f).classList.add('active');
+  renderPayments();
+}
+function renderPayments() {
+  const overdue=data.payments.filter(p=>p.status==='overdue');
+  document.getElementById('payments-alerts').innerHTML=overdue.length
+    ?`<div class="alert alert-red"><span>⚠️</span><div><b style="color:#f87171">${overdue.length} overdue — action required</b><div style="font-size:12px;color:#f87171;opacity:.8;margin-top:2px">${overdue.map(p=>p.vendor+': '+fmt(p.amount)+' (due '+fmtDate(p.dueDate)+')').join(' · ')}</div></div></div>`:'';
+  let filtered=[...data.payments].sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
+  if(paymentFilter!=='all')filtered=filtered.filter(p=>p.status===paymentFilter);
+  const tbody=document.getElementById('payments-table');
+  const empty=document.getElementById('payments-empty');
+  if(!filtered.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  const sb=s=>({'overdue':'<span class="badge badge-red">Overdue</span>','due-soon':'<span class="badge badge-amber">Due Soon</span>','upcoming':'<span class="badge badge-blue">Upcoming</span>','paid':'<span class="badge badge-green">Paid</span>'}[s]||'<span class="badge badge-gray">—</span>');
+  tbody.innerHTML=filtered.map(p=>`
+    <tr>
+      <td style="color:${p.status==='overdue'?'#f87171':p.status==='due-soon'?'#fbbf24':'#64748b'};font-weight:${p.status==='overdue'||p.status==='due-soon'?'600':'400'};white-space:nowrap">${fmtDate(p.dueDate)}</td>
+      <td style="font-weight:500">${p.vendor}</td>
+      <td style="color:#94a3b8">${p.description||'—'}</td>
+      <td><span class="badge badge-gray" style="font-size:10px">${p.category||'—'}</span></td>
+      <td style="font-weight:700;color:#fb923c">${fmt(p.amount)}</td>
+      <td>${p.recurring&&p.recurring!=='false'?`<span class="badge badge-violet" style="font-size:10px">🔄 ${p.recurring}</span>`:'—'}</td>
+      <td>${sb(p.status)}</td>
+      <td style="display:flex;gap:6px">
+        ${p.status!=='paid'?`<button class="btn btn-success btn-sm" onclick="markPaid('${p.id}')">✓ Paid</button>`:''}
+        <button class="btn btn-danger btn-sm" onclick="deletePayment('${p.id}')">✕</button>
+      </td>
+    </tr>`).join('');
+}
+
+// ===================== STRIPE =====================
+function renderStripe() {
+  destroyChart('cashflow-chart');
+  charts['cashflow-chart']=new Chart(document.getElementById('cashflow-chart'),{
+    type:'bar',
+    data:{labels:['May 2026','Jun 2026','Jul 2026'],datasets:[
+      {label:'Subscriptions',data:[1398.99,1398.99,1398.99],backgroundColor:'rgba(124,58,237,.8)',borderRadius:4,stack:'in'},
+      {label:'Est. One-time',data:[800,600,700],backgroundColor:'rgba(14,165,233,.7)',borderRadius:4,stack:'in'},
+      {label:'Est. Expenses',data:[736.70,736.70,736.70],backgroundColor:'rgba(248,113,113,.6)',borderRadius:4,stack:'out'},
+    ]},
+    options:{responsive:true,plugins:{legend:{labels:{color:'#64748b',font:{size:11}}}},scales:{x:{stacked:true,ticks:{color:'#475569'},grid:{color:'#1a1a30'}},y:{stacked:true,ticks:{color:'#475569',callback:v=>'$'+v.toLocaleString()},grid:{color:'#1a1a30'}}}}
+  });
+  document.getElementById('stripe-transactions').innerHTML=STRIPE_TX.map(t=>`
+    <tr><td style="color:#64748b">${fmtDate(t.date)}</td><td style="font-weight:500">${t.customer}</td>
+    <td style="font-weight:700;color:${t.status==='succeeded'?'#4ade80':'#f87171'}">${fmt(t.amount)}</td>
+    <td>${t.status==='succeeded'?'<span class="badge badge-green">Succeeded</span>':'<span class="badge badge-red">Failed</span>'}</td></tr>`).join('');
+  // Show Sumit panel if credentials exist
+  const hasSumit = !!(data.settings.sumitCompanyId?.trim() && data.settings.sumitApiKey?.trim());
+  document.getElementById('sumit-panel').style.display = hasSumit ? 'block' : 'none';
+}
+
+// ===================== SUMIT =====================
+async function loadSumitRevenue() {
+  const companyId = data.settings.sumitCompanyId?.trim();
+  const apiKey = data.settings.sumitApiKey?.trim();
+  if(!companyId || !apiKey) return;
+  document.getElementById('sumit-loading').style.display='block';
+  document.getElementById('sumit-table').style.display='none';
+  document.getElementById('sumit-empty').style.display='none';
+  try {
+    const now = new Date();
+    const fromDate = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+    const res = await fetch('/api/sumit', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        Credentials: {CompanyID: companyId, APIKey: apiKey},
+        Parameters: {FromDate: fromDate, PageSize: 50}
+      })
+    });
+    const json = await res.json();
+    document.getElementById('sumit-loading').style.display='none';
+    if(json.Documents && json.Documents.length) {
+      const docs = json.Documents;
+      const total = docs.reduce((s,d)=>s+(d.VATIncludedInTotal||d.TotalAmount||0),0);
+      document.getElementById('sumit-mrr').textContent = '₪'+total.toFixed(2);
+      document.getElementById('sumit-doc-count').textContent = docs.length;
+      document.getElementById('sumit-total').textContent = '₪'+total.toFixed(2);
+      document.getElementById('sumit-table').style.display='';
+      document.getElementById('sumit-empty').style.display='none';
+      document.getElementById('sumit-tbody').innerHTML = docs.map(d=>`
+        <tr>
+          <td style="color:#64748b">${d.DocumentDate?.split('T')[0]||'—'}</td>
+          <td style="font-family:monospace;color:#94a3b8">${d.DocumentNumber||'—'}</td>
+          <td style="font-weight:500">${d.ClientName||'—'}</td>
+          <td style="font-weight:700;color:#4ade80">₪${(d.VATIncludedInTotal||d.TotalAmount||0).toFixed(2)}</td>
+          <td><span class="badge badge-violet">${d.DocumentTypeName||'Document'}</span></td>
+        </tr>`).join('');
+    } else {
+      document.getElementById('sumit-mrr').textContent = '₪0';
+      document.getElementById('sumit-doc-count').textContent = '0';
+      document.getElementById('sumit-total').textContent = '₪0';
+      document.getElementById('sumit-empty').style.display='block';
+    }
+  } catch(e) {
+    document.getElementById('sumit-loading').style.display='none';
+    document.getElementById('sumit-empty').textContent = 'Error loading Sumit data: '+e.message;
+    document.getElementById('sumit-empty').style.display='block';
+  }
+}
+
+// ===================== CALENDAR =====================
+function calNav(d){calMonth+=d;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function renderCalendar() {
+  const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-title').textContent=MONTHS[calMonth]+' '+calYear;
+  const firstDay=new Date(calYear,calMonth,1).getDay();
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const prevDays=new Date(calYear,calMonth,0).getDate();
+  const todayStr=today();
+  const events={};
+  const addEv=(ds,cls,lbl)=>{if(!events[ds])events[ds]=[];events[ds].push({cls,lbl});};
+  data.payments.forEach(p=>{if(p.status==='paid')return;const cls=p.status==='overdue'?'ev-red':p.status==='due-soon'?'ev-amber':'ev-violet';addEv(p.dueDate,cls,p.vendor+' '+fmt(p.amount));});
+  [{date:'2026-04-28',lbl:'Nils $99 (failing)'},{date:'2026-05-15',lbl:'Miklos $99'},{date:'2026-05-25',lbl:'Aranit $99'},{date:'2026-05-28',lbl:'Solodigitalis $1,200'},{date:'2026-05-20',lbl:'Vincent $0.99'},{date:'2026-06-15',lbl:'Miklos $99'},{date:'2026-06-25',lbl:'Aranit $99'},{date:'2026-06-28',lbl:'Solodigitalis $1,200'}].forEach(b=>addEv(b.date,'ev-blue','⚡ '+b.lbl));
+  let html='';
+  for(let i=0;i<firstDay;i++) html+=`<div class="cal-day other-month"><div>${prevDays-firstDay+i+1}</div></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=ds===todayStr;
+    const evs=events[ds]||[];
+    const evHtml=evs.slice(0,2).map(e=>`<div class="cal-event ${e.cls}">${e.lbl}</div>`).join('');
+    const more=evs.length>2?`<div style="font-size:9px;color:#475569;margin-top:1px">+${evs.length-2} more</div>`:'';
+    const evsJson=JSON.stringify(evs).replace(/"/g,'&quot;');
+    html+=`<div class="cal-day${isToday?' today':''}" onclick="showCalDay('${ds}','${evsJson}')"><div style="font-weight:${isToday?'700':'500'};margin-bottom:2px">${d}</div>${evHtml}${more}</div>`;
+  }
+  const total=Math.ceil((firstDay+daysInMonth)/7)*7;
+  for(let i=0,n=1;i<total-firstDay-daysInMonth;i++,n++) html+=`<div class="cal-day other-month"><div>${n}</div></div>`;
+  document.getElementById('cal-grid').innerHTML=html;
+  document.getElementById('cal-day-detail').style.display='none';
+}
+function showCalDay(ds,evsJson){
+  const evs=typeof evsJson==='string'?JSON.parse(evsJson.replace(/&quot;/g,'"')):evsJson;
+  const det=document.getElementById('cal-day-detail');
+  if(!evs.length){det.style.display='none';return;}
+  document.getElementById('cal-detail-title').textContent=fmtDate(ds);
+  document.getElementById('cal-detail-events').innerHTML=evs.map(e=>`<div class="cal-event ${e.cls}" style="font-size:12px;padding:6px 10px;margin-bottom:4px;border-radius:6px">${e.lbl}</div>`).join('');
+  det.style.display='block';
+}
+
+// ===================== PIE CHART =====================
+function renderPieChart(canvasId,legendId,expenses) {
+  const byCat={};
+  expenses.forEach(e=>{if(!byCat[e.category])byCat[e.category]=0;byCat[e.category]+=e.amount;});
+  const labels=Object.keys(byCat);
+  const vals=labels.map(l=>byCat[l]);
+  const colors=labels.map(l=>CAT_COLORS[l]||'#6b7280');
+  const total=vals.reduce((s,v)=>s+v,0);
+  destroyChart(canvasId);
+  charts[canvasId]=new Chart(document.getElementById(canvasId),{
+    type:'doughnut',
+    data:{labels,datasets:[{data:vals,backgroundColor:colors,borderWidth:2,borderColor:'#10101e'}]},
+    options:{responsive:true,cutout:'60%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmt(ctx.raw)} (${(ctx.raw/total*100).toFixed(1)}%)`}}}}
+  });
+  const legEl=document.getElementById(legendId);
+  if(legEl) legEl.innerHTML=labels.map((l,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${colors[i]};display:inline-block"></span><span style="color:#94a3b8">${l}</span></span>
+      <span style="color:#e2e8f0;font-weight:500">${(vals[i]/total*100).toFixed(0)}%</span>
+    </div>`).join('');
+}
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+// ===================== REPORTS =====================
+function updateReportPreview() {
+  const period=document.getElementById('report-period').value;
+  document.getElementById('custom-range').style.display=period==='custom'?'block':'none';
+  const labels={'current-month':'April 2026','last-month':'March 2026','q1-2026':'Q1 2026','ytd':'YTD 2026','custom':'Custom'};
+  document.getElementById('report-period-label').textContent=labels[period];
+  const {exps}=getReportData(period);
+  const totalExp=exps.reduce((s,e)=>s+e.amount,0);
+  const mrr=1398.99;const net=mrr-totalExp;
+  const byCat={};exps.forEach(e=>{if(!byCat[e.category])byCat[e.category]=0;byCat[e.category]+=e.amount;});
+  document.getElementById('report-preview').innerHTML=`
+    <div style="border:1px solid #1a1a30;border-radius:10px;padding:24px;font-size:13px">
+      <div style="border-bottom:1px solid #1a1a30;padding-bottom:16px;margin-bottom:16px">
+        <div style="font-size:18px;font-weight:700"><span style="color:#fff">Magi</span><span style="color:#a78bfa">pic</span> AI, LLC</div>
+        <div style="color:#475569;margin-top:2px">Financial Report — ${labels[period]}</div>
+        <div style="color:#374151;font-size:11px;margin-top:4px">Generated ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+        <div style="background:#0d0d1a;border-radius:8px;padding:12px"><div style="color:#475569;font-size:11px;font-weight:600;text-transform:uppercase">MRR</div><div style="font-size:20px;font-weight:700;color:#a78bfa;margin-top:4px">${fmt(mrr)}</div></div>
+        <div style="background:#0d0d1a;border-radius:8px;padding:12px"><div style="color:#475569;font-size:11px;font-weight:600;text-transform:uppercase">Total Expenses</div><div style="font-size:20px;font-weight:700;color:#fb923c;margin-top:4px">${fmt(totalExp)}</div></div>
+        <div style="background:#0d0d1a;border-radius:8px;padding:12px"><div style="color:#475569;font-size:11px;font-weight:600;text-transform:uppercase">Net P&L</div><div style="font-size:20px;font-weight:700;color:${net>=0?'#4ade80':'#f87171'};margin-top:4px">${net<0?'-':''}${fmt(Math.abs(net))}</div></div>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Expense Breakdown</div>
+      <table style="margin-bottom:16px">
+        <thead><tr><th style="font-size:10px;color:#374151;padding:6px 0">Category</th><th style="font-size:10px;color:#374151;padding:6px;text-align:right">Amount</th><th style="font-size:10px;color:#374151;padding:6px;text-align:right">%</th><th style="font-size:10px;color:#374151;padding:6px;text-align:right">Budget</th></tr></thead>
+        <tbody>${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{const budget=data.budgets[cat]||0;const over=budget&&amt>budget;return`<tr><td style="padding:5px 0;color:${over?'#f87171':'#94a3b8'}">${cat}${over?' ⚠️':''}</td><td style="text-align:right;color:#fb923c;font-weight:600;padding:5px 6px">${fmt(amt)}</td><td style="text-align:right;color:#64748b;padding:5px 6px">${totalExp?(amt/totalExp*100).toFixed(1):0}%</td><td style="text-align:right;color:${over?'#f87171':'#374151'};padding:5px 6px">${budget?fmt(budget):'—'}</td></tr>`;}).join('')}
+        <tr style="border-top:1px solid #1a1a30"><td style="padding:8px 0;font-weight:700;color:#e2e8f0">Total</td><td style="text-align:right;font-weight:700;color:#fb923c;padding:8px 6px">${fmt(totalExp)}</td><td colspan="2"></td></tr></tbody>
+      </table>
+      <div style="font-size:12px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Active Subscriptions</div>
+      <table><thead><tr><th style="font-size:10px;color:#374151;padding:6px 0">Customer</th><th style="font-size:10px;color:#374151;padding:6px;text-align:right">Monthly</th><th style="font-size:10px;color:#374151;padding:6px">Status</th></tr></thead>
+      <tbody>
+        <tr><td style="color:#94a3b8;padding:5px 0">Solodigitalis Inc</td><td style="text-align:right;color:#4ade80;font-weight:600;padding:5px 6px">$1,200.00</td><td style="padding:5px 6px;color:#4ade80">Active</td></tr>
+        <tr><td style="color:#94a3b8;padding:5px 0">Aranit Allkja</td><td style="text-align:right;color:#4ade80;font-weight:600;padding:5px 6px">$99.00</td><td style="padding:5px 6px;color:#4ade80">Active</td></tr>
+        <tr><td style="color:#94a3b8;padding:5px 0">Miklos Gergely</td><td style="text-align:right;color:#4ade80;font-weight:600;padding:5px 6px">$99.00</td><td style="padding:5px 6px;color:#4ade80">Active</td></tr>
+        <tr><td style="color:#94a3b8;padding:5px 0">Nils Vilnis</td><td style="text-align:right;color:#f87171;font-weight:600;padding:5px 6px">$99.00</td><td style="padding:5px 6px;color:#f87171">Past Due ⚠️</td></tr>
+        <tr><td style="color:#94a3b8;padding:5px 0">Vincent Lam</td><td style="text-align:right;color:#4ade80;font-weight:600;padding:5px 6px">$0.99</td><td style="padding:5px 6px;color:#4ade80">Active</td></tr>
+        <tr style="border-top:1px solid #1a1a30"><td style="font-weight:700;color:#e2e8f0;padding:8px 0">Confirmed MRR</td><td style="text-align:right;font-weight:700;color:#a78bfa;padding:8px 6px">$1,398.99</td><td></td></tr>
+      </tbody></table>
+    </div>`;
+}
+
+function getReportData(period) {
+  let from,to;
+  if(period==='current-month'){from='2026-04-01';to='2026-04-30';}
+  else if(period==='last-month'){from='2026-03-01';to='2026-03-31';}
+  else if(period==='q1-2026'){from='2026-01-01';to='2026-03-31';}
+  else if(period==='ytd'){from='2026-01-01';to='2026-04-28';}
+  else{from=document.getElementById('report-from').value||'2026-01-01';to=document.getElementById('report-to').value||'2026-04-28';}
+  return{exps:data.expenses.filter(e=>e.date>=from&&e.date<=to),pays:data.payments.filter(p=>p.dueDate>=from&&p.dueDate<=to)};
+}
+
+// ===================== HEBREW FONT =====================
+let _hebrewFontB64 = null;
+async function loadHebrewFont() {
+  if (_hebrewFontB64) return _hebrewFontB64;
+  const urls = [
+    'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansHebrew/NotoSansHebrew-Regular.ttf',
+    'https://fonts.gstatic.com/s/alef/v26/FeVQS0BTqb3zGBhhBA.ttf',
+  ];
+  for (const url of urls) {
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) continue;
+      const buf = await resp.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += 8192) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i+8192, bytes.length)));
+      }
+      _hebrewFontB64 = btoa(binary);
+      return _hebrewFontB64;
+    } catch(e) { continue; }
+  }
+  throw new Error('Hebrew font unavailable');
+}
+
+// ===================== REPORT LANGUAGE =====================
+let reportLang = 'en';
+function setReportLang(lang) {
+  reportLang = lang;
+  document.getElementById('lang-en').className = lang==='en' ? 'btn btn-primary' : 'btn btn-secondary';
+  document.getElementById('lang-he').className = lang==='he' ? 'btn btn-primary' : 'btn btn-secondary';
+}
+const RPT = {
+  en: {
+    title:'Financial Report', generated:'Generated:', company:'Magipic AI, LLC',
+    pl:'P&L Summary', metric:'Metric', value:'Value',
+    mrr:'Monthly Recurring Revenue', stripeRev:'Total Stripe Revenue', totalExp:'Total Expenses',
+    netPl:'Net P&L', mom:'MoM vs Prior Month', activeSubs:'Active Subscriptions',
+    budgetVsActual:'Budget vs Actual', category:'Category', actual:'Actual',
+    budget:'Budget', variance:'Variance', status:'Status', over:'Over', ok:'OK',
+    expenseDetail:'Expense Detail', date:'Date', vendor:'Vendor', desc:'Description',
+    amount:'Amount', total:'TOTAL', taxTitle:'Tax Estimate (25% — guidance only)',
+    annRev:'Annualised Revenue', annExp:'Annualised Expenses', annNet:'Annualised Net',
+    taxEst:'Tax Estimate (25%)', taxNote:'Note', taxConsult:'Consult your accountant for actual obligations',
+    confidential:'Confidential', page:'Page', of:'of',
+    summarySheet:'Summary', budgetSheet:'Budget vs Actual', expSheet:'Expenses',
+    paymentsSheet:'Payments Due', stripeSheet:'Stripe Revenue',
+    customer:'Customer', email:'Email', country:'Country', monthly:'Monthly',
+    nextBilling:'Next Billing', annual:'Annual',
+    dueDateCol:'Due Date', recurring:'Recurring',
+    active:'Active', pastDue:'Past Due',
+    sumitRev:'Sumit Revenue (Israeli clients)', vatLine:'VAT (18%)', sumitNet:'Net Revenue ex-VAT',
+  },
+  he: {
+    title:'דוח פיננסי', generated:'נוצר:', company:'Magipic AI, בע"מ',
+    pl:'סיכום רווח והפסד', metric:'מדד', value:'ערך',
+    mrr:'הכנסה חוזרת חודשית (MRR)', stripeRev:'סה"כ הכנסות Stripe', totalExp:'סה"כ הוצאות',
+    netPl:'רווח נקי', mom:'שינוי לעומת חודש קודם', activeSubs:'מנויים פעילים',
+    budgetVsActual:'תקציב מול בפועל', category:'קטגוריה', actual:'בפועל',
+    budget:'תקציב', variance:'סטייה', status:'סטטוס', over:'חריגה', ok:'תקין',
+    expenseDetail:'פירוט הוצאות', date:'תאריך', vendor:'ספק', desc:'תיאור',
+    amount:'סכום', total:'סה"כ', taxTitle:'הערכת מס (25% - להנחיה בלבד)',
+    annRev:'הכנסה שנתית', annExp:'הוצאות שנתיות', annNet:'רווח נקי שנתי',
+    taxEst:'הערכת מס (25%)', taxNote:'הערה', taxConsult:'התייעץ עם רואה החשבון שלך לחישוב המדויק',
+    confidential:'סודי', page:'עמוד', of:'מתוך',
+    summarySheet:'סיכום', budgetSheet:'תקציב מול בפועל', expSheet:'הוצאות',
+    paymentsSheet:'תשלומים עתידיים', stripeSheet:'הכנסות Stripe',
+    customer:'לקוח', email:'אימייל', country:'מדינה', monthly:'חודשי',
+    nextBilling:'חיוב הבא', annual:'שנתי',
+    dueDateCol:'תאריך פירעון', recurring:'חוזר',
+    active:'פעיל', pastDue:'באיחור',
+    sumitRev:'הכנסות Sumit (לקוחות ישראלים)', vatLine:'מע"מ (18%)', sumitNet:'הכנסה נטו ללא מע"מ',
+  }
+};
+
+// ===================== PDF =====================
+async function exportPDF() {
+  const L=RPT[reportLang];
+  const {jsPDF}=window.jspdf;const doc=new jsPDF();
+  // Load Hebrew font if needed
+  let hebrewFontName = null;
+  if (reportLang === 'he') {
+    try {
+      const b64 = await loadHebrewFont();
+      doc.addFileToVFS('NotoSansHebrew.ttf', b64);
+      doc.addFont('NotoSansHebrew.ttf', 'NotoSansHebrew', 'normal');
+      hebrewFontName = 'NotoSansHebrew';
+    } catch(e) { console.warn('Hebrew font load failed, using ASCII fallback'); }
+  }
+  const setHebFont = () => { if (hebrewFontName) doc.setFont(hebrewFontName, 'normal'); else doc.setFont(undefined, 'normal'); };
+  const hebStyles = hebrewFontName ? {font: hebrewFontName} : {};
+  const period=document.getElementById('report-period').value;
+  const {exps,pays}=getReportData(period);
+  const labelsEn={'current-month':'April 2026','last-month':'March 2026','q1-2026':'Q1 2026','ytd':'YTD 2026','custom':'Custom'};
+  const labelsHe={'current-month':'אפריל 2026','last-month':'מרץ 2026','q1-2026':'רבעון 1 2026','ytd':'מצטבר 2026','custom':'מותאם אישית'};
+  const periodLabels=reportLang==='he'?labelsHe:labelsEn;
+  const hs = hebStyles; // shorthand for Hebrew font styles in autoTable
+  doc.setFillColor(10,10,30);doc.rect(0,0,220,40,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(22);doc.setFont(undefined,'bold');doc.text('Magipic',15,22);
+  doc.setTextColor(167,139,250);doc.text('pic',15+doc.getTextWidth('Magi'),22);
+  doc.setTextColor(200,200,200);doc.setFontSize(10);setHebFont();
+  doc.text(L.title+' — '+periodLabels[period],15,32);
+  doc.setFont(undefined,'normal');
+  doc.text(L.generated+' '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),140,22);
+  doc.text(L.company,140,30);
+  let y=50;const totalExp=exps.reduce((s,e)=>s+e.amount,0);
+  const aprRev=4147.35;const aprNet=aprRev-totalExp;
+  // Get Sumit revenue from settings if available
+  const sumitGross = parseFloat(data.settings.sumitIlsRevenue||0);
+  const sumitVAT = sumitGross ? +(sumitGross - sumitGross/1.18).toFixed(2) : 0;
+  const sumitNet = sumitGross ? +(sumitGross/1.18).toFixed(2) : 0;
+  // P&L summary
+  doc.setFontSize(12);setHebFont();doc.setFont(hebrewFontName||undefined,'bold');doc.setTextColor(80,80,80);
+  doc.text(L.pl,15,y);y+=4;
+  const plBody = [
+    [L.mrr+' (Stripe USD)','$1,398.99'],
+    [L.stripeRev+' ('+periodLabels[period]+')','$4,147.35'],
+    ...(sumitGross?[[L.sumitRev+' (ILS gross)','₪'+sumitGross.toFixed(2)],[L.vatLine+' (18%)','₪'+sumitVAT.toFixed(2)],[L.sumitNet+' (ILS net)','₪'+sumitNet.toFixed(2)]]:[[L.sumitRev,'—']]),
+    [L.totalExp,fmt(totalExp)],[L.netPl+' (USD)','$'+aprNet.toFixed(2)],
+    [L.mom,'-6.6%'],[L.activeSubs,'4 '+L.active+', 1 '+L.pastDue],
+  ];
+  doc.autoTable({startY:y,head:[[L.metric,L.value]],body:plBody,theme:'grid',
+    headStyles:{fillColor:[124,58,237],...hs},bodyStyles:{...hs},margin:{left:15,right:15}});
+  y=doc.lastAutoTable.finalY+12;
+  // Budget vs actual
+  const byCat={};exps.forEach(e=>{if(!byCat[e.category])byCat[e.category]=0;byCat[e.category]+=e.amount;});
+  doc.setFontSize(12);doc.setFont(hebrewFontName||undefined,'bold');doc.setTextColor(80,80,80);doc.text(L.budgetVsActual,15,y);y+=4;
+  doc.autoTable({startY:y,head:[[L.category,L.actual,L.budget,L.variance,L.status]],
+    body:ALL_CATS.filter(c=>byCat[c]||data.budgets[c]).map(c=>{const a=byCat[c]||0;const b=data.budgets[c]||0;const v=b?a-b:null;return[c,fmt(a),b?fmt(b):'—',v!=null?(v>=0?'+':'')+fmt(Math.abs(v)):'—',v!=null&&v>0?L.over:L.ok];}),
+    theme:'striped',headStyles:{fillColor:[30,16,64],...hs},bodyStyles:{...hs},margin:{left:15,right:15}});
+  y=doc.lastAutoTable.finalY+12;
+  if(exps.length){
+    if(y>220){doc.addPage();y=20;}
+    doc.setFontSize(12);doc.setFont(hebrewFontName||undefined,'bold');doc.setTextColor(80,80,80);doc.text(L.expenseDetail,15,y);y+=4;
+    doc.autoTable({startY:y,head:[[L.date,L.vendor,L.desc,L.category,L.amount]],
+      body:exps.sort((a,b)=>b.date.localeCompare(a.date)).map(e=>[fmtDate(e.date),e.vendor,e.description||'',e.category,fmt(e.amount)]),
+      foot:[['','','',L.total,fmt(totalExp)]],theme:'striped',headStyles:{fillColor:[30,16,64],...hs},
+      bodyStyles:{...hs},footStyles:{fillColor:[20,10,40],textColor:[167,139,250],fontStyle:'bold',...hs},margin:{left:15,right:15}});
+  }
+  if(document.getElementById('rpt-tax').checked){
+    y=doc.lastAutoTable.finalY+12;if(y>220){doc.addPage();y=20;}
+    doc.setFontSize(12);doc.setFont(hebrewFontName||undefined,'bold');doc.setTextColor(80,80,80);doc.text(L.taxTitle,15,y);y+=4;
+    const annNet=aprNet*12;
+    const taxBody=[
+      [L.annRev+' (USD)','$'+(aprRev*12).toFixed(2)],
+      [L.annExp,'$'+(totalExp*12).toFixed(2)],
+      [L.annNet+' (USD)','$'+annNet.toFixed(2)],
+      [L.taxEst+' (~25%)','$'+(annNet*.25).toFixed(2)],
+    ];
+    if(sumitGross){
+      taxBody.push([L.sumitRev+' ILS (ann.)','₪'+(sumitGross*12).toFixed(2)]);
+      taxBody.push([L.vatLine+' to remit (18%)','₪'+(sumitVAT*12).toFixed(2)]);
+      taxBody.push([L.sumitNet+' ILS (ann.)','₪'+(sumitNet*12).toFixed(2)]);
+    }
+    taxBody.push([L.taxNote,L.taxConsult]);
+    doc.autoTable({startY:y,body:taxBody,theme:'grid',bodyStyles:{...hs},headStyles:{fillColor:[124,58,237],...hs},margin:{left:15,right:15}});
+  }
+  const pc=doc.getNumberOfPages();
+  for(let i=1;i<=pc;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(150,150,150);doc.setFont(undefined,'normal');doc.text(L.company+' — '+L.confidential+' — '+L.page+' '+i+' '+L.of+' '+pc,15,290);}
+  doc.save('Magipic_Financial_Report_'+new Date().toISOString().split('T')[0]+(reportLang==='he'?'_HE':'')+'.pdf');
+}
+
+// ===================== EXCEL =====================
+function exportExcel() {
+  const L=RPT[reportLang];
+  const period=document.getElementById('report-period').value;
+  const {exps,pays}=getReportData(period);
+  const wb=XLSX.utils.book_new();
+  const totalExp=exps.reduce((s,e)=>s+e.amount,0);
+  const aprNet=4147.35-totalExp;
+  const periodLabel={'current-month':'April 2026','last-month':'March 2026','q1-2026':'Q1 2026','ytd':'YTD 2026','custom':'Custom'}[period]||period;
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    [L.company+' — '+L.title],[L.generated,new Date().toLocaleDateString()],[''],
+    [L.metric,L.value],[L.mrr,'$1,398.99'],[L.stripeRev+' ('+periodLabel+')','$4,147.35'],
+    [L.totalExp,fmt(totalExp)],[L.netPl,fmt(aprNet)],[L.mom,'-6.6%'],['Stripe Balance','$0.00'],
+  ]),L.summarySheet);
+  const byCat={};exps.forEach(e=>{if(!byCat[e.category])byCat[e.category]=0;byCat[e.category]+=e.amount;});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    [L.category,L.actual,L.budget,L.variance,L.status],
+    ...ALL_CATS.filter(c=>byCat[c]||data.budgets[c]).map(c=>{const a=byCat[c]||0;const b=data.budgets[c]||0;return[c,+a.toFixed(2),b||'—',b?(a-b).toFixed(2):'—',b&&a>b?L.over:'OK'];}),
+  ]),L.budgetSheet.substring(0,31));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    [L.date,L.vendor,L.desc,L.category,L.amount,'Notes'],
+    ...exps.sort((a,b)=>b.date.localeCompare(a.date)).map(e=>[e.date,e.vendor,e.description||'',e.category,+e.amount.toFixed(2),e.notes||'']),
+    ['','','',L.total,+totalExp.toFixed(2),''],
+  ]),L.expSheet);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    [L.dueDateCol,L.vendor,L.desc,L.category,L.amount,L.status,L.recurring],
+    ...pays.map(p=>[p.dueDate,p.vendor,p.description||'',p.category||'',+p.amount.toFixed(2),p.status,p.recurring||'One-time']),
+  ]),L.paymentsSheet.substring(0,31));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    [L.customer,L.email,L.country,L.monthly,L.nextBilling,L.status,L.annual],
+    ['Solodigitalis Inc','tim@solodigitalis.com','CA',1200,'2026-05-28',L.active,14400],
+    ['Aranit Allkja','selfiemirroralbania@gmail.com','AL',99,'2026-05-25',L.active,1188],
+    ['Miklos Gergely','miklos.gergely@gmail.com','HU',99,'2026-05-15',L.active,1188],
+    ['Nils Vilnis','nvilnis@gmail.com','LV',99,'2026-04-28',L.pastDue,1188],
+    ['Vincent Lam','vincent.lam@pacificphotobooths.com','US',0.99,'2026-05-20',L.active,11.88],
+    ['','','',1398.99,'','Confirmed MRR',''],
+  ]),L.stripeSheet);
+  XLSX.writeFile(wb,'Magipic_Financial_Report_'+new Date().toISOString().split('T')[0]+(reportLang==='he'?'_HE':'')+'.xlsx');
+}
+
+// ===================== RECEIPT DROP ZONE =====================
+async function handleReceiptDrop(event) {
+  event.preventDefault();
+  const zone = document.getElementById('receipt-drop-zone');
+  zone.style.borderColor='#252540'; zone.style.background='';
+  const file = event.dataTransfer.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById('drop-zone-status');
+  statusEl.textContent = 'Processing ' + file.name + '...';
+  statusEl.style.color = '#fbbf24';
+  // Send to Make.com webhook if configured
+  const webhookUrl = data.settings.receiptWebhookUrl?.trim();
+  if (webhookUrl) {
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64Data = e.target.result.split(',')[1];
+        await fetch(webhookUrl, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            filename: file.name,
+            mimeType: file.type,
+            data: base64Data,
+            source: 'magipic-dashboard',
+            timestamp: new Date().toISOString()
+          })
+        });
+        statusEl.textContent = 'Sent to Make.com pipeline: ' + file.name + ' — check Invoice Inbox in ~30s';
+        statusEl.style.color = '#4ade80';
+        setTimeout(() => { statusEl.textContent = 'Image or PDF → auto-OCR & add expense. If Make.com webhook is set, also sends to your Drive pipeline.'; statusEl.style.color = '#374151'; }, 8000);
+      };
+      reader.readAsDataURL(file);
+    } catch(err) {
+      statusEl.textContent = 'Webhook send failed: ' + err.message;
+      statusEl.style.color = '#f87171';
+    }
+  }
+  // Also open expense modal with OCR
+  openModal('expense-modal');
+  document.getElementById('exp-date').value = new Date().toISOString().slice(0,10);
+  const reader2 = new FileReader();
+  reader2.onload = async (e) => {
+    pendingReceipt = e.target.result;
+    const prev = document.getElementById('receipt-preview');
+    if (prev) { prev.src = pendingReceipt; prev.style.display='block'; }
+    const dragText = document.getElementById('drag-text');
+    if (dragText) dragText.style.display = 'none';
+    if (data.settings?.anthropicKey?.trim()) {
+      const loadingEl = document.getElementById('ocr-loading');
+      const resultEl = document.getElementById('ocr-result');
+      if (loadingEl) loadingEl.style.display = 'flex';
+      if (resultEl) resultEl.style.display = 'none';
+      try {
+        const result = await ocrReceipt(pendingReceipt, file.type);
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (result) {
+          if (result.vendor) document.getElementById('exp-vendor').value = result.vendor;
+          if (result.amount) document.getElementById('exp-amount').value = result.amount;
+          if (result.date) document.getElementById('exp-date').value = result.date;
+          if (result.category) { const sel=document.getElementById('exp-category'); for(let o of sel.options) if(o.value===result.category){sel.value=result.category;break;} }
+          if (result.description) document.getElementById('exp-desc').value = result.description;
+          if (resultEl) { resultEl.style.display='block'; resultEl.style.background=''; resultEl.style.borderColor=''; document.getElementById('ocr-result-detail').textContent='OCR: '+result.vendor+' · '+fmt(result.amount||0)+' · '+result.date; }
+        }
+      } catch(err) {
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (resultEl) { resultEl.style.display='block'; document.getElementById('ocr-result-detail').innerHTML='<span style="color:#f87171">OCR failed: '+err.message+'</span>'; }
+      }
+    }
+  };
+  reader2.readAsDataURL(file);
+  if (!webhookUrl) {
+    statusEl.textContent = 'No webhook set — added to expense modal only. Set a webhook in Settings for Drive pipeline.';
+    statusEl.style.color = '#fbbf24';
+    setTimeout(() => { statusEl.textContent = 'Image or PDF → auto-OCR & add expense. If Make.com webhook is set, also sends to your Drive pipeline.'; statusEl.style.color = '#374151'; }, 5000);
+  }
+}
+
+// ===================== CSV BANK IMPORT =====================
+let csvParsedRows = [], csvHeaders = [];
+const KEYWORD_CATS = {
+  'aws|amazon|s3|cloudfront|ec2':'Infrastructure & Hosting',
+  'vercel|netlify|heroku|digitalocean':'Infrastructure & Hosting',
+  'mongodb|mongo|atlas':'Infrastructure & Hosting',
+  'google|gcp|firebase':'Infrastructure & Hosting',
+  'openai|anthropic|claude|gpt':'Software & SaaS',
+  'notion|slack|zoom|figma|github|linear':'Software & SaaS',
+  'adobe|canva|midjourney':'Software & SaaS',
+  'stripe|paypal|payoneer':'Payment Processing',
+  'facebook|meta|google ads|instagram|tiktok|taboola':'Marketing & Advertising',
+  'accountant|lawyer|legal|bookkeep|cpa|notary':'Professional Services',
+  'office|stationery|stamps|fedex|ups|post':'Office & Admin',
+  'flight|hotel|airbnb|uber|taxi|train|bus':'Travel & Entertainment',
+  'restaurant|cafe|food':'Travel & Entertainment',
+  'insurance|bituach':'Insurance',
+  'vat|mas|tax|mas hakhnasa|arnona':'Taxes & Fees',
+  'computer|laptop|phone|equipment|hardware':'Equipment',
+};
+function autoCategory(desc) {
+  if (!desc) return '';
+  const d = desc.toLowerCase();
+  for (const [pattern, cat] of Object.entries(KEYWORD_CATS)) {
+    if (new RegExp(pattern).test(d)) return cat;
+  }
+  return 'Other';
+}
+
+function importBankStatement(input) {
+  const file = input.files[0]; if (!file) return;
+  input.value = '';
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'csv') {
+    const reader = new FileReader();
+    reader.onload = e => parseCSVAndShow(e.target.result);
+    reader.readAsText(file, 'utf-8');
+  } else if (ext === 'xlsx' || ext === 'xls') {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const csv = XLSX.utils.sheet_to_csv(ws);
+      parseCSVAndShow(csv);
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function parseCSVAndShow(csvText) {
+  const lines = csvText.trim().split('\n').filter(l => l.trim());
+  if (lines.length < 2) { alert('File appears empty'); return; }
+  // Try both comma and semicolon delimiters
+  const delim = (lines[0].split(';').length > lines[0].split(',').length) ? ';' : ',';
+  const parseRow = row => {
+    const result = []; let inQ = false, cur = '';
+    for (let i = 0; i < row.length; i++) {
+      const c = row[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === delim && !inQ) { result.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    result.push(cur.trim()); return result;
+  };
+  csvHeaders = parseRow(lines[0]);
+  csvParsedRows = lines.slice(1).map(parseRow);
+  showCSVMapper();
+}
+
+function showCSVMapper() {
+  const opts = csvHeaders.map((h,i) => '<option value="'+i+'">'+h+'</option>').join('');
+  const autoDate = csvHeaders.findIndex(h => /date|taarich|תאריך/i.test(h));
+  const autoDesc = csvHeaders.findIndex(h => /desc|name|vendor|business|shem|שם/i.test(h));
+  const autoAmt = csvHeaders.findIndex(h => /amount|sum|total|charge|debit|sikum|סכום|חיוב/i.test(h));
+  document.getElementById('csv-column-mapper').innerHTML =
+    '<div style="font-size:13px;color:#94a3b8;margin-bottom:12px">Map columns from your statement ('+csvParsedRows.length+' rows, '+csvHeaders.length+' columns):</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">'
+    + '<div><label>Date column</label><select id="csv-col-date">'+opts+'</select></div>'
+    + '<div><label>Description / Vendor</label><select id="csv-col-desc">'+opts+'</select></div>'
+    + '<div><label>Amount column</label><select id="csv-col-amt">'+opts+'</select></div>'
+    + '</div>'
+    + '<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">'
+    + '<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="csv-negate" checked> <span style="font-size:12px;color:#94a3b8">Negate amounts (debit = positive expense)</span></label>'
+    + '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-left:12px"><input type="checkbox" id="csv-skip-income" checked> <span style="font-size:12px;color:#94a3b8">Skip credit/income rows</span></label>'
+    + '</div>';
+  if (autoDate >= 0) document.getElementById('csv-col-date').value = autoDate;
+  if (autoDesc >= 0) document.getElementById('csv-col-desc').value = autoDesc;
+  if (autoAmt >= 0) document.getElementById('csv-col-amt').value = autoAmt;
+  renderCSVPreview();
+  document.getElementById('csv-col-date').onchange =
+  document.getElementById('csv-col-desc').onchange =
+  document.getElementById('csv-col-amt').onchange = renderCSVPreview;
+  openModal('csv-modal');
+}
+
+function renderCSVPreview() {
+  const di = +document.getElementById('csv-col-date').value;
+  const vi = +document.getElementById('csv-col-desc').value;
+  const ai = +document.getElementById('csv-col-amt').value;
+  const negate = document.getElementById('csv-negate').checked;
+  const skipIncome = document.getElementById('csv-skip-income').checked;
+  const rows = csvParsedRows.map(r => {
+    const rawAmt = parseFloat((r[ai]||'').replace(/[^0-9.\-]/g,''))||0;
+    const amt = negate ? -rawAmt : rawAmt;
+    return {date:r[di]||'', desc:r[vi]||'', amt, skip: skipIncome && amt <= 0};
+  });
+  const visible = rows.filter(r => !r.skip).slice(0, 50);
+  document.getElementById('csv-preview-table').innerHTML =
+    '<table><thead><tr><th><input type="checkbox" checked onchange="document.querySelectorAll(\'.csv-row-check\').forEach(c=>c.checked=this.checked)"></th><th>Date</th><th>Description</th><th>Category (auto)</th><th style="text-align:right">Amount</th></tr></thead><tbody>'
+    + visible.map((r,i) => '<tr><td><input type="checkbox" class="csv-row-check" data-i="'+i+'" checked></td><td style="color:#64748b;white-space:nowrap">'+r.date+'</td><td>'+r.desc+'</td><td style="color:#a78bfa;font-size:11px">'+autoCategory(r.desc)+'</td><td style="text-align:right;color:#fb923c">$'+Math.abs(r.amt).toFixed(2)+'</td></tr>').join('')
+    + '</tbody></table>'
+    + (rows.length > 50 ? '<div style="font-size:11px;color:#475569;padding:8px">Showing first 50 of '+rows.filter(r=>!r.skip).length+' rows</div>' : '');
+  window._csvVisibleRows = visible;
+}
+
+function confirmCSVImport() {
+  const di = +document.getElementById('csv-col-date').value;
+  const vi = +document.getElementById('csv-col-desc').value;
+  const ai = +document.getElementById('csv-col-amt').value;
+  const negate = document.getElementById('csv-negate').checked;
+  const checked = Array.from(document.querySelectorAll('.csv-row-check:checked')).map(c => +c.dataset.i);
+  const rows = window._csvVisibleRows || [];
+  let added = 0;
+  checked.forEach(idx => {
+    const r = rows[idx]; if (!r) return;
+    const rawAmt = r.amt;
+    if (rawAmt <= 0) return;
+    // Normalise date to YYYY-MM-DD
+    let dateStr = r.date.replace(/\//g, '-').replace(/(\d{2})-(\d{2})-(\d{4})/, '$3-$2-$1');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) dateStr = new Date().toISOString().slice(0,10);
+    data.expenses.push({
+      id:'e'+Date.now()+'_'+idx,
+      date: dateStr,
+      vendor: r.desc.substring(0,40),
+      description: r.desc,
+      category: autoCategory(r.desc),
+      amount: +rawAmt.toFixed(2),
+      receipt: null,
+      notes: 'Imported from bank statement',
+      currency: 'USD'
+    });
+    added++;
+  });
+  saveData(); closeModal('csv-modal'); renderExpenses();
+  alert(added + ' expenses imported successfully!');
+}
+
+// ===================== INIT =====================
+loadData();
+renderDashboard();
+document.getElementById('report-period').addEventListener('change',updateReportPreview);
+</script>
+</body>
+</html>
