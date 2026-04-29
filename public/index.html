@@ -158,7 +158,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
     <div class="card kpi">
       <div class="kpi-label">Active MRR</div>
       <div class="kpi-value" style="color:#a78bfa" id="kpi-mrr">$1,200.99</div>
-      <div class="kpi-sub" id="kpi-mrr-sub">2 active · 2 paused · 1 failing</div>
+      <div class="kpi-sub" id="kpi-mrr-sub">1 active · 3 paused · 1 failing</div>
     </div>
     <div class="card kpi">
       <div class="kpi-label">Total Expenses (MTD)</div>
@@ -336,7 +336,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
   </div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
     <div class="card kpi"><div class="kpi-label">Available Balance</div><div class="kpi-value" style="color:#4ade80">$0.00</div><div class="kpi-sub">USD · Live</div></div>
-    <div class="card kpi"><div class="kpi-label">Active MRR</div><div class="kpi-value" style="color:#a78bfa">$1,200.99</div><div class="kpi-sub">Solodigitalis + Vincent</div></div>
+    <div class="card kpi"><div class="kpi-label">Active MRR</div><div class="kpi-value" style="color:#a78bfa">$1,200.00</div><div class="kpi-sub">Solodigitalis only</div></div>
     <div class="card kpi"><div class="kpi-label">At-Risk / Paused</div><div class="kpi-value" style="color:#f87171">$297.00</div><div class="kpi-sub">Nils (failing) + Miklos + Aranit (paused)</div></div>
     <div class="card kpi"><div class="kpi-label">Next 30 Days (Est.)</div><div class="kpi-value" style="color:#60a5fa">$1,200.99</div><div class="kpi-sub">Active subscriptions only</div></div>
   </div>
@@ -388,7 +388,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
       <tr><td style="font-weight:500">Aranit Allkja</td><td style="color:#64748b">selfiemirroralbania@gmail.com</td><td><span class="badge badge-gray">🇦🇱 AL</span></td><td style="color:#60a5fa;font-weight:600">$99.00</td><td style="color:#60a5fa">Paused</td><td><span class="badge" style="background:#1e3a5f;color:#60a5fa">⏸ Paused</span></td><td style="color:#60a5fa">$1,188</td></tr>
       <tr><td style="font-weight:500">Miklos Gergely</td><td style="color:#64748b">miklos.gergely@gmail.com</td><td><span class="badge badge-gray">🇭🇺 HU</span></td><td style="color:#60a5fa;font-weight:600">$99.00</td><td style="color:#60a5fa">Paused</td><td><span class="badge" style="background:#1e3a5f;color:#60a5fa">⏸ Paused</span></td><td style="color:#60a5fa">$1,188</td></tr>
       <tr><td style="font-weight:500">Nils Vilnis</td><td style="color:#64748b">nvilnis@gmail.com</td><td><span class="badge badge-gray">🇱🇻 LV</span></td><td style="color:#f87171;font-weight:600">$99.00</td><td><span style="color:#f87171">Apr 28 ⚠️</span></td><td><span class="badge badge-red">Past Due</span></td><td style="color:#f87171">$1,188</td></tr>
-      <tr><td style="font-weight:500">Vincent Lam</td><td style="color:#64748b">vincent.lam@pacificphotobooths.com</td><td><span class="badge badge-gray">🇺🇸 US</span></td><td style="color:#4ade80;font-weight:600">$0.99</td><td>May 20, 2026</td><td><span class="badge badge-green">Active</span></td><td style="color:#64748b">$12</td></tr>
+      <tr><td style="font-weight:500">Vincent Lam</td><td style="color:#64748b">vincent.lam@pacificphotobooths.com</td><td><span class="badge badge-gray">🇺🇸 US</span></td><td style="color:#60a5fa;font-weight:600">$0.99</td><td style="color:#60a5fa">Paused</td><td><span class="badge" style="background:#1e3a5f;color:#60a5fa">⏸ Paused</span></td><td style="color:#60a5fa">$12</td></tr>
     </tbody></table>
   </div>
   <div class="card">
@@ -1225,7 +1225,7 @@ function renderDashboard() {
   const lastMonth = '2026-03';
   const mtdExp = data.expenses.filter(e=>e.date.startsWith(thisMonth)).reduce((s,e)=>s+e.amount,0);
   const lastMtdExp = data.expenses.filter(e=>e.date.startsWith(lastMonth)).reduce((s,e)=>s+e.amount,0);
-  const mrr = 1200.99; // Solodigitalis $1200 + Vincent $0.99 (Miklos/Aranit paused)
+  const mrr = 1200.00; // Solodigitalis only (Miklos/Aranit/Vincent paused, Nils failing)
   document.getElementById('kpi-mrr').textContent = fmt(mrr);
   document.getElementById('kpi-expenses').textContent = fmt(mtdExp);
   document.getElementById('kpi-expenses-sub').textContent = data.expenses.filter(e=>e.date.startsWith(thisMonth)).length+' transactions';
@@ -1594,8 +1594,8 @@ function updateReportPreview() {
         <tr><td style="color:#94a3b8;padding:5px 0">Aranit Allkja</td><td style="text-align:right;color:#60a5fa;font-weight:600;padding:5px 6px">$99.00</td><td style="padding:5px 6px;color:#60a5fa">⏸ Paused</td></tr>
         <tr><td style="color:#94a3b8;padding:5px 0">Miklos Gergely</td><td style="text-align:right;color:#60a5fa;font-weight:600;padding:5px 6px">$99.00</td><td style="padding:5px 6px;color:#60a5fa">⏸ Paused</td></tr>
         <tr><td style="color:#94a3b8;padding:5px 0">Nils Vilnis</td><td style="text-align:right;color:#f87171;font-weight:600;padding:5px 6px">$99.00</td><td style="padding:5px 6px;color:#f87171">Past Due ⚠️</td></tr>
-        <tr><td style="color:#94a3b8;padding:5px 0">Vincent Lam</td><td style="text-align:right;color:#4ade80;font-weight:600;padding:5px 6px">$0.99</td><td style="padding:5px 6px;color:#4ade80">Active</td></tr>
-        <tr style="border-top:1px solid #1a1a30"><td style="font-weight:700;color:#e2e8f0;padding:8px 0">Active MRR</td><td style="text-align:right;font-weight:700;color:#a78bfa;padding:8px 6px">$1,200.99</td><td></td></tr>
+        <tr><td style="color:#94a3b8;padding:5px 0">Vincent Lam</td><td style="text-align:right;color:#60a5fa;font-weight:600;padding:5px 6px">$0.99</td><td style="padding:5px 6px;color:#60a5fa">⏸ Paused</td></tr>
+        <tr style="border-top:1px solid #1a1a30"><td style="font-weight:700;color:#e2e8f0;padding:8px 0">Active MRR</td><td style="text-align:right;font-weight:700;color:#a78bfa;padding:8px 6px">$1,200.00</td><td></td></tr>
       </tbody></table>
     </div>`;
 }
@@ -1806,8 +1806,8 @@ function exportExcel() {
     ['Aranit Allkja','selfiemirroralbania@gmail.com','AL',99,'Paused','⏸ Paused',1188],
     ['Miklos Gergely','miklos.gergely@gmail.com','HU',99,'Paused','⏸ Paused',1188],
     ['Nils Vilnis','nvilnis@gmail.com','LV',99,'2026-04-28',L.pastDue,1188],
-    ['Vincent Lam','vincent.lam@pacificphotobooths.com','US',0.99,'2026-05-20',L.active,11.88],
-    ['','','',1200.99,'','Active MRR',''],
+    ['Vincent Lam','vincent.lam@pacificphotobooths.com','US',0.99,'Paused','⏸ Paused',11.88],
+    ['','','',1200.00,'','Active MRR',''],
   ]),L.stripeSheet);
   XLSX.writeFile(wb,'Magipic_Financial_Report_'+new Date().toISOString().split('T')[0]+(reportLang==='he'?'_HE':'')+'.xlsx');
 }
