@@ -1523,9 +1523,14 @@ async function loadSumitRevenue() {
       document.getElementById('sumit-mrr').textContent = '₪0';
       document.getElementById('sumit-doc-count').textContent = '0';
       document.getElementById('sumit-total').textContent = '₪0';
-      const debugMsg = json.ErrorMessage || json.Message || (json.Status!=null ? 'Sumit status code: '+json.Status : 'No documents found for this period.');
-      const rawKeys = Object.keys(json).join(', ');
-      document.getElementById('sumit-empty').innerHTML = debugMsg + '<br><span style="font-size:10px;color:#374151">Response fields: ' + rawKeys + '</span>';
+      let debugMsg;
+      if (json.error) {
+        // Proxy error — show what Sumit actually returned
+        debugMsg = 'Proxy: ' + json.error + (json.raw ? '<br><span style="font-size:10px;color:#f87171;word-break:break-all">Sumit raw response: ' + json.raw + '</span>' : '');
+      } else {
+        debugMsg = json.ErrorMessage || json.Message || (json.Status!=null ? 'Sumit status code: '+json.Status : 'No documents found for this period.');
+      }
+      document.getElementById('sumit-empty').innerHTML = debugMsg;
       document.getElementById('sumit-empty').style.display='block';
     }
   } catch(e) {
