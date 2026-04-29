@@ -18,11 +18,12 @@ module.exports = async function handler(req, res) {
       CompanyID: parseInt(companyId, 10),
       APIKey: apiKey
     },
-    DocumentTypes: ['Invoice', 'Receipt', 'InvoiceReceipt', 'CreditInvoice'],
+    // null = all document types; matches Sumit docs format
+    DocumentTypes: null,
     DateFrom: dateFrom,
     DateTo:   dateTo,
     IncludeDrafts: false,
-    Paging: { Page: page, ResultsPerPage: 100 }
+    Paging: null   // null = default paging
   };
 
   try {
