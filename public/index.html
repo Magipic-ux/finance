@@ -1591,11 +1591,11 @@ function updateReportPreview() {
       <table><thead><tr><th style="font-size:10px;color:#374151;padding:6px 0">Customer</th><th style="font-size:10px;color:#374151;padding:6px;text-align:right">Monthly</th><th style="font-size:10px;color:#374151;padding:6px">Status</th></tr></thead>
       <tbody>
         <tr><td style="color:#94a3b8;padding:5px 0">Solodigitalis Inc</td><td style="text-align:right;color:#4ade80;font-weight:600;padding:5px 6px">$1,200.00</td><td style="padding:5px 6px;color:#4ade80">Active</td></tr>
-        <tr><td style="color:#94a3b8;padding:5px 0">Aranit Allkja</td><td style="text-align:right;color:#4ade80;font-weight:600;padding:5px 6px">$99.00</td><td style="padding:5px 6px;color:#4ade80">Active</td></tr>
-        <tr><td style="color:#94a3b8;padding:5px 0">Miklos Gergely</td><td style="text-align:right;color:#4ade80;font-weight:600;padding:5px 6px">$99.00</td><td style="padding:5px 6px;color:#4ade80">Active</td></tr>
+        <tr><td style="color:#94a3b8;padding:5px 0">Aranit Allkja</td><td style="text-align:right;color:#60a5fa;font-weight:600;padding:5px 6px">$99.00</td><td style="padding:5px 6px;color:#60a5fa">⏸ Paused</td></tr>
+        <tr><td style="color:#94a3b8;padding:5px 0">Miklos Gergely</td><td style="text-align:right;color:#60a5fa;font-weight:600;padding:5px 6px">$99.00</td><td style="padding:5px 6px;color:#60a5fa">⏸ Paused</td></tr>
         <tr><td style="color:#94a3b8;padding:5px 0">Nils Vilnis</td><td style="text-align:right;color:#f87171;font-weight:600;padding:5px 6px">$99.00</td><td style="padding:5px 6px;color:#f87171">Past Due ⚠️</td></tr>
         <tr><td style="color:#94a3b8;padding:5px 0">Vincent Lam</td><td style="text-align:right;color:#4ade80;font-weight:600;padding:5px 6px">$0.99</td><td style="padding:5px 6px;color:#4ade80">Active</td></tr>
-        <tr style="border-top:1px solid #1a1a30"><td style="font-weight:700;color:#e2e8f0;padding:8px 0">Confirmed MRR</td><td style="text-align:right;font-weight:700;color:#a78bfa;padding:8px 6px">$1,398.99</td><td></td></tr>
+        <tr style="border-top:1px solid #1a1a30"><td style="font-weight:700;color:#e2e8f0;padding:8px 0">Active MRR</td><td style="text-align:right;font-weight:700;color:#a78bfa;padding:8px 6px">$1,200.99</td><td></td></tr>
       </tbody></table>
     </div>`;
 }
@@ -1803,11 +1803,11 @@ function exportExcel() {
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
     [L.customer,L.email,L.country,L.monthly,L.nextBilling,L.status,L.annual],
     ['Solodigitalis Inc','tim@solodigitalis.com','CA',1200,'2026-05-28',L.active,14400],
-    ['Aranit Allkja','selfiemirroralbania@gmail.com','AL',99,'2026-05-25',L.active,1188],
-    ['Miklos Gergely','miklos.gergely@gmail.com','HU',99,'2026-05-15',L.active,1188],
+    ['Aranit Allkja','selfiemirroralbania@gmail.com','AL',99,'Paused','⏸ Paused',1188],
+    ['Miklos Gergely','miklos.gergely@gmail.com','HU',99,'Paused','⏸ Paused',1188],
     ['Nils Vilnis','nvilnis@gmail.com','LV',99,'2026-04-28',L.pastDue,1188],
     ['Vincent Lam','vincent.lam@pacificphotobooths.com','US',0.99,'2026-05-20',L.active,11.88],
-    ['','','',1398.99,'','Confirmed MRR',''],
+    ['','','',1200.99,'','Active MRR',''],
   ]),L.stripeSheet);
   XLSX.writeFile(wb,'Magipic_Financial_Report_'+new Date().toISOString().split('T')[0]+(reportLang==='he'?'_HE':'')+'.xlsx');
 }
