@@ -1525,10 +1525,12 @@ async function loadSumitRevenue() {
       document.getElementById('sumit-total').textContent = '₪0';
       let debugMsg;
       if (json.error) {
-        // Proxy error — show what Sumit actually returned
-        debugMsg = 'Proxy: ' + json.error + (json.raw ? '<br><span style="font-size:10px;color:#f87171;word-break:break-all">Sumit raw response: ' + json.raw + '</span>' : '');
+        debugMsg = '<span style="color:#f87171">' + json.error + '</span>';
+        if (json.rawLength !== undefined) debugMsg += '<br><span style="font-size:10px;color:#475569">Raw length: ' + json.rawLength + ' bytes</span>';
+        if (json.rawBase64) debugMsg += '<br><span style="font-size:10px;color:#374151;word-break:break-all">Base64: ' + json.rawBase64.slice(0,100) + '</span>';
+        if (json.rawText) debugMsg += '<br><span style="font-size:10px;color:#f87171">' + json.rawText + '</span>';
       } else {
-        debugMsg = json.ErrorMessage || json.Message || (json.Status!=null ? 'Sumit status code: '+json.Status : 'No documents found for this period.');
+        debugMsg = json.ErrorMessage || json.Message || (json.Status!=null ? 'Sumit status: '+json.Status : 'No documents found for this period.');
       }
       document.getElementById('sumit-empty').innerHTML = debugMsg;
       document.getElementById('sumit-empty').style.display='block';

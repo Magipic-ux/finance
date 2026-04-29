@@ -9,43 +9,47 @@ module.exports = async function handler(req, res) {
   const { companyId, apiKey, page = 1 } = req.body || {};
   if (!companyId || !apiKey) return res.status(400).json({ error: 'Missing companyId or apiKey' });
 
-  // Try multiple known Sumit endpoint variations
-  const endpoints = [
-    'https://api.sumit.co.il/accounting/documents',
-    'https://api.sumit.co.il/v2/accounting/documents',
-    'https://api.sumit.co.il/invoicing/documents',
-  ];
+  const body = {
+    Credentials: { CompanyID: companyId, APIKey: apiKey },
+    Parameters: {},
+    Page: page,
+    ResultsPerPage: 100
+  };
 
-  for (const url of endpoints) {
-    try {
-      const upstream = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Credentials: { CompanyID: companyId, APIKey: apiKey }, Page: page, ResultsPerPage: 100 })
+  try {
+    const upstream = await fetch('https://api.sumit.co.il/accounting/documents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const text = await upstream.text();
+
+    // Encode raw as base64 so non-printable chars (BOM, etc.) are visible
+    const rawB64 = Buffer.from(text).toString('base64');
+    const rawLen = text.length;
+
+    if (!text.trim()) {
+      return res.status(502).json({
+        error: `Sumit returned empty body (HTTP ${upstream.status})`,
+        rawLength: rawLen,
+        rawBase64: rawB64
       });
-      const text = await upstream.text();
-      if (!text.trim()) {
-        // Empty body — record status and try next endpoint
-        if (url === endpoints[endpoints.length - 1]) {
-          return res.status(502).json({ error: `All endpoints returned empty body. Last HTTP status: ${upstream.status}`, endpoint: url });
-        }
-        continue;
-      }
-      let data;
-      try { data = JSON.parse(text); }
-      catch (e) {
-        return res.status(502).json({
-          error: `Sumit returned non-JSON (HTTP ${upstream.status})`,
-          endpoint: url,
-          raw: text.slice(0, 500)
-        });
-      }
-      // Got valid JSON — return it with which endpoint worked
-      return res.status(upstream.status).json({ ...data, _endpoint: url });
-    } catch (e) {
-      if (url === endpoints[endpoints.length - 1]) {
-        return res.status(500).json({ error: 'Proxy fetch failed: ' + e.message });
-      }
     }
+
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) {
+      return res.status(502).json({
+        error: `Sumit returned non-JSON (HTTP ${upstream.status})`,
+        rawLength: rawLen,
+        rawBase64: rawB64,
+        rawText: text.slice(0, 200)
+      });
+    }
+
+    return res.status(upstream.status).json(data);
+  } catch (e) {
+    return res.status(500).json({ error: 'Proxy fetch failed: ' + e.message });
   }
 }
