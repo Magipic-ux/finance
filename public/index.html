@@ -2168,10 +2168,37 @@ function renderCSVPreview() {
     return {date:r[di]||'', desc:r[vi]||'', amt, skip: skipIncome && amt <= 0};
   });
   const visible = rows.filter(r => !r.skip).slice(0, 50);
+
+  // Duplicate detection: flag rows that match an existing expense by amount + date (±2 days)
+  function isDuplicate(r) {
+    const amt = +Math.abs(r.amt).toFixed(2);
+    // Normalise the row date to YYYY-MM-DD for comparison
+    let ds = r.date.replace(/\//g, '-').replace(/(\d{2})-(\d{2})-(\d{4})/, '$3-$2-$1');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(ds)) return false;
+    const rTime = new Date(ds).getTime();
+    return data.expenses.some(e => {
+      if (+e.amount.toFixed(2) !== amt) return false;
+      const diff = Math.abs(new Date(e.date).getTime() - rTime);
+      return diff <= 2 * 86400000; // within 2 days
+    });
+  }
+
+  let dupCount = 0;
   document.getElementById('csv-preview-table').innerHTML =
-    '<table><thead><tr><th><input type="checkbox" checked onchange="document.querySelectorAll(\'.csv-row-check\').forEach(c=>c.checked=this.checked)"></th><th>Date</th><th>Description</th><th>Category (auto)</th><th style="text-align:right">Amount</th></tr></thead><tbody>'
-    + visible.map((r,i) => '<tr><td><input type="checkbox" class="csv-row-check" data-i="'+i+'" checked></td><td style="color:#64748b;white-space:nowrap">'+r.date+'</td><td>'+r.desc+'</td><td style="color:#a78bfa;font-size:11px">'+autoCategory(r.desc)+'</td><td style="text-align:right;color:#fb923c">$'+Math.abs(r.amt).toFixed(2)+'</td></tr>').join('')
+    '<table><thead><tr><th><input type="checkbox" checked onchange="document.querySelectorAll(\'.csv-row-check\').forEach(c=>c.checked=this.checked)"></th><th>Date</th><th>Description</th><th>Category (auto)</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>'
+    + visible.map((r,i) => {
+        const dup = isDuplicate(r);
+        if (dup) dupCount++;
+        return '<tr style="'+(dup?'opacity:.5':'')+'"><td><input type="checkbox" class="csv-row-check" data-i="'+i+'" '+(dup?'':'checked')+'></td>'
+          + '<td style="color:#64748b;white-space:nowrap">'+r.date+'</td>'
+          + '<td>'+r.desc+'</td>'
+          + '<td style="color:#a78bfa;font-size:11px">'+autoCategory(r.desc)+'</td>'
+          + '<td style="text-align:right;color:#fb923c">$'+Math.abs(r.amt).toFixed(2)+'</td>'
+          + '<td>'+(dup?'<span class="badge badge-amber" style="font-size:10px">⚠️ Possible duplicate</span>':'<span class="badge badge-green" style="font-size:10px">New</span>')+'</td>'
+          + '</tr>';
+      }).join('')
     + '</tbody></table>'
+    + (dupCount ? '<div style="font-size:12px;color:#fbbf24;padding:8px 4px">⚠️ '+dupCount+' row'+(dupCount>1?'s':'')+' flagged as possible duplicates (same amount ± 2 days) — unchecked by default.</div>' : '')
     + (rows.length > 50 ? '<div style="font-size:11px;color:#475569;padding:8px">Showing first 50 of '+rows.filter(r=>!r.skip).length+' rows</div>' : '');
   window._csvVisibleRows = visible;
 }
@@ -2215,6 +2242,6 @@ document.getElementById('report-period').addEventListener('change',updateReportP
 // Auto-load Stripe revenue on start if key is saved
 if (data.settings.stripeKey?.trim()) loadStripeRevenue();
 </script>
-<!-- v2026-04-29d -->
+<!-- v2026-04-29e -->
 </body>
 </html>
