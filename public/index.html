@@ -710,7 +710,19 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div><label>Date *</label><input type="date" id="exp-date"></div>
-      <div><label>Amount (USD) *</label><input type="number" id="exp-amount" placeholder="0.00" step="0.01"></div>
+      <div style="display:grid;grid-template-columns:80px 1fr;gap:6px;align-items:end">
+        <div><label>Currency</label>
+          <select id="exp-currency">
+            <option value="USD">$ USD</option>
+            <option value="ILS">₪ ILS</option>
+            <option value="EUR">€ EUR</option>
+            <option value="GBP">£ GBP</option>
+            <option value="CAD">$ CAD</option>
+            <option value="AUD">$ AUD</option>
+          </select>
+        </div>
+        <div><label>Amount *</label><input type="number" id="exp-amount" placeholder="0.00" step="0.01"></div>
+      </div>
       <div><label>Vendor / Payee *</label><input type="text" id="exp-vendor" placeholder="e.g. AWS, Google"></div>
       <div><label>Category *</label>
         <select id="exp-category">
@@ -956,8 +968,8 @@ async function ocrReceipt(base64, mimeType) {
       messages:[{role:'user',content:[
         contentBlock,
         {type:'text',text:`Extract receipt data. Return ONLY a JSON object:
-{"vendor":"business name","amount":0.00,"date":"YYYY-MM-DD","category":"one of: Infrastructure & Hosting|Software & SaaS|Marketing & Advertising|Professional Services|Payment Processing|Office & Admin|Travel & Entertainment|Equipment|Insurance|Taxes & Fees|Other","description":"1-line description"}
-If a field is unclear use null. Amount must be a number.`}
+{"vendor":"business name","amount":0.00,"currency":"3-letter ISO code e.g. USD, ILS, EUR, GBP","date":"YYYY-MM-DD","category":"one of: Infrastructure & Hosting|Software & SaaS|Marketing & Advertising|Professional Services|Payment Processing|Office & Admin|Travel & Entertainment|Equipment|Insurance|Taxes & Fees|Other","description":"1-line description"}
+If a field is unclear use null. Amount must be a number. Detect currency from ₪=ILS, $=USD, €=EUR, £=GBP symbols or text.`}
       ]}]
     })
   });
@@ -992,6 +1004,7 @@ async function handleReceiptUpload(input) {
         if(result) {
           if(result.vendor) document.getElementById('exp-vendor').value=result.vendor;
           if(result.amount) document.getElementById('exp-amount').value=result.amount;
+          if(result.currency) { const sel=document.getElementById('exp-currency'); if([...sel.options].some(o=>o.value===result.currency)) sel.value=result.currency; }
           if(result.date) document.getElementById('exp-date').value=result.date;
           if(result.category){const sel=document.getElementById('exp-category');for(let o of sel.options)if(o.value===result.category){sel.value=result.category;break;}}
           if(result.description) document.getElementById('exp-desc').value=result.description;
@@ -1034,12 +1047,14 @@ function saveExpense() {
   const amount=parseFloat(document.getElementById('exp-amount').value);
   const vendor=document.getElementById('exp-vendor').value.trim();
   const category=document.getElementById('exp-category').value;
+  const currency=document.getElementById('exp-currency').value||'USD';
   const desc=document.getElementById('exp-desc').value.trim();
   const notes=document.getElementById('exp-notes').value.trim();
   if(!date||!amount||!vendor||!category){alert('Fill in date, amount, vendor, and category.');return;}
-  data.expenses.unshift({id:uid(),date,vendor,description:desc,category,amount,receipt:pendingReceipt,notes});
+  data.expenses.unshift({id:uid(),date,vendor,description:desc,category,amount,currency,receipt:pendingReceipt,notes});
   saveData(); closeModal('expense-modal');
   ['exp-date','exp-amount','exp-vendor','exp-desc','exp-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('exp-currency').value='USD';
   document.getElementById('exp-category').value=''; pendingReceipt=null;
   if(currentPage==='expenses')renderExpenses(); else renderDashboard();
 }
@@ -1435,7 +1450,7 @@ function renderExpenses() {
       <td style="font-weight:500">${e.vendor}</td>
       <td style="color:#94a3b8">${e.description||'—'}</td>
       <td><span class="badge badge-gray" style="font-size:10px;background:${CAT_COLORS[e.category]||'#374151'}22;color:${CAT_COLORS[e.category]||'#94a3b8'}">${e.category}</span></td>
-      <td style="font-weight:600;color:#fb923c">${fmt(e.amount)}</td>
+      <td style="font-weight:600;color:#fb923c">${e.currency&&e.currency!=='USD'?'<span style="font-size:10px;color:#94a3b8;margin-right:2px">'+e.currency+'</span>':''}${fmt(e.amount)}</td>
       <td>${e.receipt?`<img src="${e.receipt}" class="receipt-thumb" onclick="viewReceipt('${e.receipt}')">`:'<span style="color:#374151;font-size:12px">—</span>'}</td>
       <td><button class="btn btn-danger btn-sm" onclick="deleteExpense('${e.id}')">✕</button></td>
     </tr>`).join('');
@@ -2042,6 +2057,7 @@ async function handleReceiptDrop(event) {
         if (result) {
           if (result.vendor) document.getElementById('exp-vendor').value = result.vendor;
           if (result.amount) document.getElementById('exp-amount').value = result.amount;
+          if (result.currency) { const sel=document.getElementById('exp-currency'); if([...sel.options].some(o=>o.value===result.currency)) sel.value=result.currency; }
           if (result.date) document.getElementById('exp-date').value = result.date;
           if (result.category) { const sel=document.getElementById('exp-category'); for(let o of sel.options) if(o.value===result.category){sel.value=result.category;break;} }
           if (result.description) document.getElementById('exp-desc').value = result.description;
@@ -2242,6 +2258,6 @@ document.getElementById('report-period').addEventListener('change',updateReportP
 // Auto-load Stripe revenue on start if key is saved
 if (data.settings.stripeKey?.trim()) loadStripeRevenue();
 </script>
-<!-- v2026-04-29e -->
+<!-- v2026-04-29f -->
 </body>
 </html>
