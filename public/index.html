@@ -600,7 +600,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
     <div style="font-size:20px">📨</div>
     <div>
       <div style="font-weight:600;color:#c4b5fd;margin-bottom:4px">Tell your suppliers to email invoices to:</div>
-      <div style="font-size:18px;font-weight:700;color:#a78bfa;letter-spacing:.02em">hello@magipic.ai</div>
+      <div style="font-size:18px;font-weight:700;color:#a78bfa;letter-spacing:.02em">finance@magipic.ai</div>
       <div style="font-size:12px;color:#64748b;margin-top:4px">Invoices with PDF or image attachments are automatically scanned, categorised, and stored. You'll be notified by email and Slack.</div>
     </div>
   </div>
@@ -652,7 +652,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
       <div id="inbox-empty" style="padding:40px;text-align:center;color:#374151">
         <div style="font-size:32px;margin-bottom:12px">📭</div>
         <div style="font-weight:600;margin-bottom:6px;color:#64748b">No invoices yet</div>
-        <div style="font-size:12px">Add your Make.com API key in Settings, then click Refresh. Or wait for a supplier to email hello@magipic.ai.</div>
+        <div style="font-size:12px">Add your Make.com API key in Settings, then click Refresh. Or wait for a supplier to email finance@magipic.ai.</div>
       </div>
       <table id="inbox-table" style="display:none">
         <thead><tr>
@@ -669,7 +669,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;font-size:13px">
       <div style="background:#052e16;border:1px solid #065f46;border-radius:10px;padding:14px">
         <div style="color:#4ade80;font-weight:700;margin-bottom:4px">✅ Make.com Scenario</div>
-        <div style="color:#64748b;font-size:12px">ID 9145594 — runs every 15 min, watches hello@magipic.ai inbox</div>
+        <div style="color:#64748b;font-size:12px">ID 9145594 — runs every 15 min, watches finance@magipic.ai inbox</div>
       </div>
       <div style="background:#052e16;border:1px solid #065f46;border-radius:10px;padding:14px">
         <div style="color:#4ade80;font-weight:700;margin-bottom:4px">✅ Data Store Ready</div>
@@ -1530,7 +1530,8 @@ async function loadSumitRevenue() {
         if (json.rawBase64) debugMsg += '<br><span style="font-size:10px;color:#374151;word-break:break-all">Base64: ' + json.rawBase64.slice(0,100) + '</span>';
         if (json.rawText) debugMsg += '<br><span style="font-size:10px;color:#f87171">' + json.rawText + '</span>';
       } else {
-        debugMsg = json.ErrorMessage || json.Message || (json.Status!=null ? 'Sumit status: '+json.Status : 'No documents found for this period.');
+        const SUMIT_STATUS = {0:'OK',1:'Authentication failed — check Company ID and API Key',2:'Validation error',3:'Not found',4:'Access denied'};
+        debugMsg = json.ErrorMessage || json.Message || (json.Status!=null ? (SUMIT_STATUS[json.Status]||'Sumit status: '+json.Status) : 'No documents found for this period.');
       }
       document.getElementById('sumit-empty').innerHTML = debugMsg;
       document.getElementById('sumit-empty').style.display='block';
