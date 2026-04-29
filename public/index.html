@@ -1511,7 +1511,8 @@ async function loadSumitRevenue() {
     const docs = allDocs.filter(d=>(d.DocumentDate||d.Date||'').startsWith(nowStr));
     const displayDocs = allDocs; // show all in table
     if(allDocs.length) {
-      const amtField = d => d.GrandTotal??d.VATIncludedInTotal??d.TotalAmount??d.NetTotal??d.Amount??d.Price??0;
+      const SUMIT_TYPES = {0:'Invoice',1:'Credit Invoice',2:'Invoice Receipt',3:'Receipt',4:'Refund',5:'Purchase Invoice',6:'Credit Note',10:'Order',20:'Price Quote'};
+      const amtField = d => d.DocumentValue??d.CompanyValue??0;
       const mtdTotal = docs.reduce((s,d)=>s+amtField(d),0);
       const yrTotal  = allDocs.reduce((s,d)=>s+amtField(d),0);
       document.getElementById('sumit-mrr').textContent = '₪'+mtdTotal.toFixed(2);
@@ -1525,7 +1526,7 @@ async function loadSumitRevenue() {
           <td style="font-family:monospace;color:#94a3b8">${d.DocumentNumber||d.Number||'&mdash;'}</td>
           <td style="font-weight:500">${d.ClientName||d.CustomerName||'&mdash;'}</td>
           <td style="font-weight:700;color:#4ade80">₪${amtField(d).toFixed(2)}</td>
-          <td><span class="badge badge-violet">${d.DocumentTypeName||d.Type||'Doc'}</span></td>
+          <td><span class="badge badge-violet">${SUMIT_TYPES[d.Type]||'Type '+d.Type}</span></td>
         </tr>`).join('');
     } else {
       document.getElementById('sumit-mrr').textContent = '₪0';
