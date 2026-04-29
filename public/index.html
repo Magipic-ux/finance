@@ -908,26 +908,36 @@ window.onclick=e=>{if(e.target.classList.contains('modal-overlay'))e.target.clas
 async function ocrReceipt(base64, mimeType) {
   const apiKey = (data.settings?.anthropicKey||'').trim();
   if(!apiKey) return null;
+  const validImages = ['image/jpeg','image/png','image/gif','image/webp'];
+  const isPdf = mimeType === 'application/pdf';
+  const effectiveMime = validImages.includes(mimeType) ? mimeType : (isPdf ? 'application/pdf' : 'image/jpeg');
+  const contentBlock = isPdf
+    ? {type:'document', source:{type:'base64', media_type:'application/pdf', data:base64.split(',')[1]}}
+    : {type:'image',   source:{type:'base64', media_type:effectiveMime,      data:base64.split(',')[1]}};
+  const hdrs = {
+    'Content-Type':'application/json',
+    'x-api-key':apiKey,
+    'anthropic-version':'2023-06-01',
+    'anthropic-dangerous-direct-browser-access':'true'
+  };
+  if (isPdf) hdrs['anthropic-beta'] = 'pdfs-2024-09-25';
   const res = await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'x-api-key':apiKey,
-      'anthropic-version':'2023-06-01',
-      'anthropic-dangerous-direct-browser-access':'true'
-    },
+    method:'POST', headers:hdrs,
     body:JSON.stringify({
-      model:'claude-3-5-haiku-20241022',
+      model:'claude-3-haiku-20240307',
       max_tokens:400,
       messages:[{role:'user',content:[
-        {type:'image',source:{type:'base64',media_type:mimeType||'image/jpeg',data:base64.split(',')[1]}},
+        contentBlock,
         {type:'text',text:`Extract receipt data. Return ONLY a JSON object:
 {"vendor":"business name","amount":0.00,"date":"YYYY-MM-DD","category":"one of: Infrastructure & Hosting|Software & SaaS|Marketing & Advertising|Professional Services|Payment Processing|Office & Admin|Travel & Entertainment|Equipment|Insurance|Taxes & Fees|Other","description":"1-line description"}
 If a field is unclear use null. Amount must be a number.`}
       ]}]
     })
   });
-  if(!res.ok) throw new Error('API '+res.status);
+  if(!res.ok) {
+    const errBody = await res.json().catch(()=>({}));
+    throw new Error(`API ${res.status}: ${errBody?.error?.message||'check API key & file type'}`);
+  }
   const j = await res.json();
   const txt = j.content[0].text;
   const m = txt.match(/\{[\s\S]*?\}/);
@@ -1194,7 +1204,7 @@ async function testSumitConnection() {
     const res = await fetch('/api/sumit', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({Credentials:{CompanyID:companyId,APIKey:apiKey},Parameters:{PageSize:1}})
+      body: JSON.stringify({companyId, apiKey, page: 1})
     });
     const json = await res.json();
     if(json.Status === 0 || json.Documents) {
@@ -1203,7 +1213,7 @@ async function testSumitConnection() {
       statusEl.innerHTML = `<span style="color:#f87171">Error: ${json.ErrorMessage||'Check credentials'}</span>`;
     }
   } catch(e) {
-    statusEl.innerHTML = `<span style="color:#f87171">Connection failed — check credentials and CORS settings</span>`;
+    statusEl.innerHTML = `<span style="color:#f87171">Connection failed: ${e.message}</span>`;
   }
 }
 
@@ -1448,15 +1458,10 @@ async function loadSumitRevenue() {
   document.getElementById('sumit-table').style.display='none';
   document.getElementById('sumit-empty').style.display='none';
   try {
-    const now = new Date();
-    const fromDate = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
     const res = await fetch('/api/sumit', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        Credentials: {CompanyID: companyId, APIKey: apiKey},
-        Parameters: {FromDate: fromDate, PageSize: 50}
-      })
+      body: JSON.stringify({companyId, apiKey, page: 1})
     });
     const json = await res.json();
     document.getElementById('sumit-loading').style.display='none';
