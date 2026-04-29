@@ -176,8 +176,8 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px">
     <div class="card kpi" style="border-color:#1e3a2a">
       <div class="kpi-label">Revenue (April)</div>
-      <div class="kpi-value pl-up" id="kpi-rev-month">$4,147.35</div>
-      <div class="kpi-sub">Stripe receipts this month</div>
+      <div class="kpi-value pl-up" id="kpi-rev-month">—</div>
+      <div class="kpi-sub" id="kpi-rev-month-sub">Loading…</div>
     </div>
     <div class="card kpi" style="border-color:#3a1e1e">
       <div class="kpi-label">Expenses (April)</div>
@@ -327,7 +327,11 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
       <h1 style="font-size:22px;font-weight:700">Stripe Revenue & Cashflow</h1>
       <div style="color:#475569;font-size:13px;margin-top:2px">Live data — Magipic AI, LLC</div>
     </div>
-    <span class="badge badge-green" style="font-size:12px;padding:5px 12px">● Live Mode</span>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div id="stripe-rev-badge" style="font-size:13px;color:#475569"></div>
+      <button class="btn btn-secondary btn-sm" onclick="loadStripeRevenue()">↻ Refresh Revenue</button>
+      <span class="badge badge-green" style="font-size:12px;padding:5px 12px">● Live Mode</span>
+    </div>
   </div>
   <div class="alert alert-red" style="margin-bottom:20px">
     <span style="font-size:20px">⚠️</span>
@@ -350,7 +354,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px" id="sumit-kpis">
         <div class="card kpi" style="border-color:#1e3a2a"><div class="kpi-label">Sumit MRR</div><div class="kpi-value" id="sumit-mrr" style="color:#4ade80">—</div><div class="kpi-sub">Recurring (ILS)</div></div>
         <div class="card kpi"><div class="kpi-label">Documents (MTD)</div><div class="kpi-value" id="sumit-doc-count" style="color:#a78bfa">—</div><div class="kpi-sub">This month</div></div>
-        <div class="card kpi"><div class="kpi-label">Total Revenue (MTD)</div><div class="kpi-value" id="sumit-total" style="color:#60a5fa">—</div><div class="kpi-sub">All Sumit docs</div></div>
+        <div class="card kpi"><div class="kpi-label">Total Revenue (YTD)</div><div class="kpi-value" id="sumit-total" style="color:#60a5fa">—</div><div class="kpi-sub">All Sumit docs this year</div></div>
       </div>
       <div id="sumit-table-wrap" style="margin-top:14px">
         <div id="sumit-loading" style="display:none;padding:20px;text-align:center;color:#64748b;font-size:13px">Loading Sumit data...</div>
@@ -562,6 +566,18 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
       <div style="font-size:12px;color:#475569;margin-top:10px;padding:10px;background:#0d0d1a;border-radius:6px">
         ⚠️ <b>CORS note:</b> Sumit direct API calls from the browser are blocked by CORS. Use the manual ILS field above for now, or deploy to Vercel (ask for the proxy setup).
       </div>
+    </div>
+
+    <!-- Stripe Live Revenue -->
+    <div class="card" style="padding:22px">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">⚡ Stripe Live Revenue</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:16px">Enter your Stripe secret key to load real MTD revenue on the dashboard and Stripe page.</div>
+      <div style="margin-bottom:14px">
+        <label>Stripe Secret Key</label>
+        <input type="password" id="settings-stripe-key" placeholder="sk_live_..." autocomplete="off">
+        <div style="font-size:11px;color:#374151;margin-top:6px">Stored locally only. Only sent to your Vercel proxy — never to third parties.</div>
+      </div>
+      <div id="stripe-key-status" style="font-size:12px"></div>
     </div>
 
     <!-- Receipt Drag-and-Drop Webhook -->
@@ -842,7 +858,8 @@ const STRIPE_TX = [
 ];
 
 // ===================== STATE =====================
-let data = {expenses:[],payments:[],settings:{anthropicKey:'',pyRevenue:'',pyExpenses:'',makeApiKey:'',sumitCompanyId:'',sumitApiKey:''},budgets:{}};
+let data = {expenses:[],payments:[],settings:{anthropicKey:'',pyRevenue:'',pyExpenses:'',makeApiKey:'',sumitCompanyId:'',sumitApiKey:'',stripeKey:''},budgets:{}};
+let stripeRevMtd = null; // null = not loaded yet
 let inboxRecords = [], inboxFiltered = [];
 let currentPage = 'dashboard', pendingReceipt = null, paymentFilter = 'all';
 let calYear = 2026, calMonth = 3, charts = {};
@@ -868,6 +885,7 @@ function loadData() {
   data.settings.sumitCompanyId = data.settings.sumitCompanyId || '';
   data.settings.sumitApiKey = data.settings.sumitApiKey || '';
   data.settings.receiptWebhookUrl = data.settings.receiptWebhookUrl || '';
+  data.settings.stripeKey = data.settings.stripeKey || '';
   if (!data.budgets || !Object.keys(data.budgets).length) data.budgets = {...DEFAULT_BUDGETS};
 }
 function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
@@ -1054,6 +1072,11 @@ function renderSettings() {
   document.getElementById('settings-sumit-key').value = data.settings.sumitApiKey||'';
   document.getElementById('settings-sumit-ils').value = data.settings.sumitIlsRevenue||'';
   document.getElementById('settings-receipt-webhook').value = data.settings.receiptWebhookUrl||'';
+  document.getElementById('settings-stripe-key').value = data.settings.stripeKey||'';
+  const hasStripe = !!(data.settings.stripeKey?.trim());
+  document.getElementById('stripe-key-status').innerHTML = hasStripe
+    ? '<span style="color:#4ade80">✅ Stripe key saved — live MTD revenue enabled</span>'
+    : '<span style="color:#374151">No key set — revenue will show as not loaded</span>';
   const hasMake = !!(data.settings.makeApiKey?.trim());
   document.getElementById('make-key-status').innerHTML = hasMake
     ? '<span style="color:#4ade80">✅ Make.com key saved — Invoice Inbox enabled</span>'
@@ -1090,7 +1113,7 @@ function updateYoyPreview() {
   if(!el) return;
   if(!pyRev) { el.textContent=''; return; }
   const pyNet = pyRev - pyExp;
-  const curNet = 4147.35 - 736.73;
+  const curNet = (stripeRevMtd ?? 4147.35) - 736.73;
   const pct = pyNet > 0 ? ((curNet-pyNet)/pyNet*100).toFixed(1) : 'N/A';
   el.innerHTML = `<span style="color:#64748b">Prior year net: </span><span style="color:#e2e8f0">${fmt(pyNet)}</span>&nbsp;→&nbsp;<span style="color:#4ade80">YoY: ${pct !== 'N/A' ? (pct>0?'+':'')+pct+'%' : 'N/A'}</span>`;
 }
@@ -1131,6 +1154,7 @@ function saveSettings() {
   data.settings.sumitApiKey = document.getElementById('settings-sumit-key').value.trim();
   data.settings.sumitIlsRevenue = document.getElementById('settings-sumit-ils').value.trim();
   data.settings.receiptWebhookUrl = document.getElementById('settings-receipt-webhook').value.trim();
+  data.settings.stripeKey = document.getElementById('settings-stripe-key').value.trim();
   document.querySelectorAll('#budget-inputs input[data-cat]').forEach(inp => {
     data.budgets[inp.dataset.cat] = parseFloat(inp.value)||0;
   });
@@ -1270,8 +1294,19 @@ function renderDashboard() {
   netEl.textContent = (net<0?'-':'')+fmt(Math.abs(net));
   netEl.style.color = net>=0?'#4ade80':'#f87171';
 
+  // Update Revenue KPI
+  const revMonthEl = document.getElementById('kpi-rev-month');
+  const revMonthSub = document.getElementById('kpi-rev-month-sub');
+  if (stripeRevMtd !== null) {
+    if (revMonthEl) { revMonthEl.textContent = fmt(stripeRevMtd); revMonthEl.className = 'kpi-value pl-up'; }
+    if (revMonthSub) revMonthSub.textContent = 'Stripe receipts this month (live)';
+  } else {
+    if (revMonthEl) revMonthEl.textContent = '—';
+    if (revMonthSub) revMonthSub.textContent = 'Add Stripe key in Settings';
+  }
+
   // P&L
-  const aprRev = 4147.35; // from Stripe data April
+  const aprRev = stripeRevMtd ?? 4147.35; // from Stripe live data (or last known)
   const marRev = 4463.99; // March
   const aprNet = aprRev - mtdExp;
   const marNet = marRev - lastMtdExp;
@@ -1477,13 +1512,25 @@ function renderStripe() {
     ]},
     options:{responsive:true,plugins:{legend:{labels:{color:'#64748b',font:{size:11}}}},scales:{x:{stacked:true,ticks:{color:'#475569'},grid:{color:'#1a1a30'}},y:{stacked:true,ticks:{color:'#475569',callback:v=>'$'+v.toLocaleString()},grid:{color:'#1a1a30'}}}}
   });
-  document.getElementById('stripe-transactions').innerHTML=STRIPE_TX.map(t=>`
-    <tr><td style="color:#64748b">${fmtDate(t.date)}</td><td style="font-weight:500">${t.customer}</td>
-    <td style="font-weight:700;color:${t.status==='succeeded'?'#4ade80':'#f87171'}">${fmt(t.amount)}</td>
-    <td>${t.status==='succeeded'?'<span class="badge badge-green">Succeeded</span>':'<span class="badge badge-red">Failed</span>'}</td></tr>`).join('');
   // Show Sumit panel if credentials exist
   const hasSumit = !!(data.settings.sumitCompanyId?.trim() && data.settings.sumitApiKey?.trim());
   document.getElementById('sumit-panel').style.display = hasSumit ? 'block' : 'none';
+
+  // Auto-load Stripe revenue if key is set
+  if (data.settings.stripeKey?.trim()) {
+    loadStripeRevenue();
+  } else {
+    const badge = document.getElementById('stripe-rev-badge');
+    if (badge) badge.innerHTML = '<span style="color:#475569">Add Stripe key in Settings to load live revenue</span>';
+    // Show placeholder in transactions table
+    const txEl = document.getElementById('stripe-transactions');
+    if (txEl) {
+      txEl.innerHTML = STRIPE_TX.map(t=>`
+        <tr><td style="color:#64748b">${fmtDate(t.date)}</td><td style="font-weight:500">${t.customer}</td>
+        <td style="font-weight:700;color:${t.status==='succeeded'?'#4ade80':'#f87171'}">${fmt(t.amount)}</td>
+        <td>${t.status==='succeeded'?'<span class="badge badge-green">Succeeded</span>':'<span class="badge badge-red">Failed</span>'}</td></tr>`).join('');
+    }
+  }
 }
 
 // ===================== SUMIT =====================
@@ -1549,6 +1596,76 @@ async function loadSumitRevenue() {
     document.getElementById('sumit-loading').style.display='none';
     document.getElementById('sumit-empty').textContent = 'Proxy error: '+e.message;
     document.getElementById('sumit-empty').style.display='block';
+  }
+}
+
+// ===================== STRIPE LIVE REVENUE =====================
+async function loadStripeRevenue() {
+  const stripeKey = data.settings.stripeKey?.trim();
+  if (!stripeKey) {
+    document.getElementById('stripe-rev-badge').textContent = '⚠️ No Stripe key in Settings';
+    return;
+  }
+  const badge = document.getElementById('stripe-rev-badge');
+  if (badge) badge.textContent = '⏳ Loading…';
+
+  const now = new Date();
+  const month = now.toISOString().slice(0, 7); // e.g. "2026-04"
+
+  try {
+    const res = await fetch('/api/stripe', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({stripeKey, month})
+    });
+    const json = await res.json();
+
+    if (json.error) {
+      if (badge) badge.innerHTML = '<span style="color:#f87171">Stripe error: ' + json.error + '</span>';
+      return;
+    }
+
+    const charges = json.data || [];
+    const succeeded = charges.filter(c => c.status === 'succeeded' || c.paid === true);
+    const mtdTotal = succeeded.reduce((s, c) => s + (c.amount / 100), 0);
+    const txCount = succeeded.length;
+
+    // Update global
+    stripeRevMtd = mtdTotal;
+
+    // Update KPIs
+    const revEl = document.getElementById('kpi-rev-month');
+    const revSub = document.getElementById('kpi-rev-month-sub');
+    if (revEl) { revEl.textContent = fmt(mtdTotal); revEl.className = 'kpi-value pl-up'; }
+    if (revSub) revSub.textContent = txCount + ' payment' + (txCount === 1 ? '' : 's') + ' this month';
+    if (badge) badge.innerHTML = '<span style="color:#4ade80">✅ ' + fmt(mtdTotal) + ' MTD (' + txCount + ' charges)</span>';
+
+    // Update Recent Stripe Transactions table with live data
+    const txEl = document.getElementById('stripe-transactions');
+    if (txEl) {
+      const allCharges = [...charges].sort((a, b) => b.created - a.created).slice(0, 20);
+      if (allCharges.length) {
+        txEl.innerHTML = allCharges.map(c => {
+          const d = new Date(c.created * 1000);
+          const dateStr = d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+          const name = c.billing_details?.name || c.customer?.name || c.description || 'Unknown';
+          const ok = c.status === 'succeeded' || c.paid;
+          return `<tr>
+            <td style="color:#64748b">${dateStr}</td>
+            <td style="font-weight:500">${name}</td>
+            <td style="font-weight:700;color:${ok ? '#4ade80' : '#f87171'}">${fmt(c.amount / 100)}</td>
+            <td>${ok ? '<span class="badge badge-green">Succeeded</span>' : '<span class="badge badge-red">Failed</span>'}</td>
+          </tr>`;
+        }).join('');
+      }
+    }
+
+    // Re-render dashboard to pick up new stripeRevMtd
+    if (currentPage === 'dashboard') renderDashboard();
+    else renderDashboard(); // always refresh so P&L KPIs are accurate
+
+  } catch(e) {
+    if (badge) badge.innerHTML = '<span style="color:#f87171">Proxy error: ' + e.message + '</span>';
   }
 }
 
@@ -1770,7 +1887,7 @@ async function exportPDF() {
   doc.text(L.generated+' '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),140,22);
   doc.text(L.company,140,30);
   let y=50;const totalExp=exps.reduce((s,e)=>s+e.amount,0);
-  const aprRev=4147.35;const aprNet=aprRev-totalExp;
+  const aprRev=stripeRevMtd??4147.35;const aprNet=aprRev-totalExp;
   // Get Sumit revenue from settings if available
   const sumitGross = parseFloat(data.settings.sumitIlsRevenue||0);
   const sumitVAT = sumitGross ? +(sumitGross - sumitGross/1.18).toFixed(2) : 0;
@@ -1780,7 +1897,7 @@ async function exportPDF() {
   doc.text(L.pl,15,y);y+=4;
   const plBody = [
     [L.mrr+' (Stripe USD)','$1,398.99'],
-    [L.stripeRev+' ('+periodLabels[period]+')','$4,147.35'],
+    [L.stripeRev+' ('+periodLabels[period]+')','$'+(stripeRevMtd??4147.35).toFixed(2)],
     ...(sumitGross?[[L.sumitRev+' (ILS gross)','₪'+sumitGross.toFixed(2)],[L.vatLine+' (18%)','₪'+sumitVAT.toFixed(2)],[L.sumitNet+' (ILS net)','₪'+sumitNet.toFixed(2)]]:[[L.sumitRev,'—']]),
     [L.totalExp,fmt(totalExp)],[L.netPl+' (USD)','$'+aprNet.toFixed(2)],
     [L.mom,'-6.6%'],[L.activeSubs,'4 '+L.active+', 1 '+L.pastDue],
@@ -1833,11 +1950,11 @@ function exportExcel() {
   const {exps,pays}=getReportData(period);
   const wb=XLSX.utils.book_new();
   const totalExp=exps.reduce((s,e)=>s+e.amount,0);
-  const aprNet=4147.35-totalExp;
+  const aprNet=(stripeRevMtd??4147.35)-totalExp;
   const periodLabel={'current-month':'April 2026','last-month':'March 2026','q1-2026':'Q1 2026','ytd':'YTD 2026','custom':'Custom'}[period]||period;
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
     [L.company+' — '+L.title],[L.generated,new Date().toLocaleDateString()],[''],
-    [L.metric,L.value],[L.mrr,'$1,398.99'],[L.stripeRev+' ('+periodLabel+')','$4,147.35'],
+    [L.metric,L.value],[L.mrr,'$1,398.99'],[L.stripeRev+' ('+periodLabel+')','$'+(stripeRevMtd??4147.35).toFixed(2)],
     [L.totalExp,fmt(totalExp)],[L.netPl,fmt(aprNet)],[L.mom,'-6.6%'],['Stripe Balance','$0.00'],
   ]),L.summarySheet);
   const byCat={};exps.forEach(e=>{if(!byCat[e.category])byCat[e.category]=0;byCat[e.category]+=e.amount;});
@@ -2095,7 +2212,9 @@ function confirmCSVImport() {
 loadData();
 renderDashboard();
 document.getElementById('report-period').addEventListener('change',updateReportPreview);
+// Auto-load Stripe revenue on start if key is saved
+if (data.settings.stripeKey?.trim()) loadStripeRevenue();
 </script>
-<!-- v2026-04-29c -->
+<!-- v2026-04-29d -->
 </body>
 </html>
