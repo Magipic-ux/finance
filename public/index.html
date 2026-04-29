@@ -156,9 +156,9 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
       <div class="kpi-sub">Available · Live</div>
     </div>
     <div class="card kpi">
-      <div class="kpi-label">Confirmed MRR</div>
-      <div class="kpi-value" style="color:#a78bfa" id="kpi-mrr">$1,398.99</div>
-      <div class="kpi-sub" id="kpi-mrr-sub">3 active subscriptions</div>
+      <div class="kpi-label">Active MRR</div>
+      <div class="kpi-value" style="color:#a78bfa" id="kpi-mrr">$1,200.99</div>
+      <div class="kpi-sub" id="kpi-mrr-sub">2 active · 2 paused · 1 failing</div>
     </div>
     <div class="card kpi">
       <div class="kpi-label">Total Expenses (MTD)</div>
@@ -336,9 +336,9 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
   </div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
     <div class="card kpi"><div class="kpi-label">Available Balance</div><div class="kpi-value" style="color:#4ade80">$0.00</div><div class="kpi-sub">USD · Live</div></div>
-    <div class="card kpi"><div class="kpi-label">Confirmed MRR</div><div class="kpi-value" style="color:#a78bfa">$1,398.99</div><div class="kpi-sub">Solodigitalis + Miklos + Aranit</div></div>
-    <div class="card kpi"><div class="kpi-label">At-Risk Revenue</div><div class="kpi-value" style="color:#f87171">$99.00</div><div class="kpi-sub">Nils Vilnis — failing</div></div>
-    <div class="card kpi"><div class="kpi-label">Next 30 Days (Est.)</div><div class="kpi-value" style="color:#60a5fa">$1,398.99</div><div class="kpi-sub">Subscription billings only</div></div>
+    <div class="card kpi"><div class="kpi-label">Active MRR</div><div class="kpi-value" style="color:#a78bfa">$1,200.99</div><div class="kpi-sub">Solodigitalis + Vincent</div></div>
+    <div class="card kpi"><div class="kpi-label">At-Risk / Paused</div><div class="kpi-value" style="color:#f87171">$297.00</div><div class="kpi-sub">Nils (failing) + Miklos + Aranit (paused)</div></div>
+    <div class="card kpi"><div class="kpi-label">Next 30 Days (Est.)</div><div class="kpi-value" style="color:#60a5fa">$1,200.99</div><div class="kpi-sub">Active subscriptions only</div></div>
   </div>
   <!-- Sumit Revenue Panel -->
   <div id="sumit-panel" class="card" style="padding:20px;margin-bottom:20px;display:none">
@@ -371,11 +371,12 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
       </div>
     </div>
     <div class="card" style="padding:20px">
-      <div style="font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:14px">Payment Timing Guide</div>
+      <div style="font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:4px">📅 Customer Billing Schedule</div>
+      <div style="font-size:11px;color:#475569;margin-bottom:12px">Incoming payments from your customers</div>
       <div style="font-size:12px;color:#475569;line-height:1.8">
-        <div style="background:#0f0f1c;border-radius:8px;padding:12px;margin-bottom:8px"><div style="color:#4ade80;font-weight:600">✅ Safe to pay now</div><div style="margin-top:4px;color:#64748b">Solodigitalis ($1,200) billed Apr 27. Cash confirmed.</div></div>
-        <div style="background:#0f0f1c;border-radius:8px;padding:12px;margin-bottom:8px"><div style="color:#fbbf24;font-weight:600">⏳ Pay after May 15</div><div style="margin-top:4px;color:#64748b">Miklos Gergely ($99) bills ~May 15.</div></div>
-        <div style="background:#0f0f1c;border-radius:8px;padding:12px"><div style="color:#fbbf24;font-weight:600">⏳ Pay after May 25</div><div style="margin-top:4px;color:#64748b">Aranit Allkja ($99) bills ~May 25.</div></div>
+        <div style="background:#0f0f1c;border-radius:8px;padding:12px;margin-bottom:8px"><div style="color:#4ade80;font-weight:600">✅ Received — Apr 27</div><div style="margin-top:4px;color:#64748b">Solodigitalis ($1,200) — confirmed in Stripe.</div></div>
+        <div style="background:#0f0f1c;border-radius:8px;padding:12px;margin-bottom:8px"><div style="color:#60a5fa;font-weight:600">⏸ Paused — was ~May 15</div><div style="margin-top:4px;color:#64748b">Miklos Gergely ($99) — subscription paused.</div></div>
+        <div style="background:#0f0f1c;border-radius:8px;padding:12px"><div style="color:#60a5fa;font-weight:600">⏸ Paused — was ~May 25</div><div style="margin-top:4px;color:#64748b">Aranit Allkja ($99) — subscription paused.</div></div>
       </div>
     </div>
   </div>
@@ -384,8 +385,8 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
     <table><thead><tr><th>Customer</th><th>Email</th><th>Country</th><th>Amount/mo</th><th>Next Billing</th><th>Status</th><th>Annual Value</th></tr></thead>
     <tbody>
       <tr><td style="font-weight:500">Solodigitalis Inc</td><td style="color:#64748b">tim@solodigitalis.com</td><td><span class="badge badge-gray">🇨🇦 CA</span></td><td style="color:#4ade80;font-weight:600">$1,200.00</td><td>May 28, 2026</td><td><span class="badge badge-green">Active</span></td><td style="color:#4ade80">$14,400</td></tr>
-      <tr><td style="font-weight:500">Aranit Allkja</td><td style="color:#64748b">selfiemirroralbania@gmail.com</td><td><span class="badge badge-gray">🇦🇱 AL</span></td><td style="color:#4ade80;font-weight:600">$99.00</td><td>May 25, 2026</td><td><span class="badge badge-green">Active</span></td><td style="color:#4ade80">$1,188</td></tr>
-      <tr><td style="font-weight:500">Miklos Gergely</td><td style="color:#64748b">miklos.gergely@gmail.com</td><td><span class="badge badge-gray">🇭🇺 HU</span></td><td style="color:#4ade80;font-weight:600">$99.00</td><td>May 15, 2026</td><td><span class="badge badge-green">Active</span></td><td style="color:#4ade80">$1,188</td></tr>
+      <tr><td style="font-weight:500">Aranit Allkja</td><td style="color:#64748b">selfiemirroralbania@gmail.com</td><td><span class="badge badge-gray">🇦🇱 AL</span></td><td style="color:#60a5fa;font-weight:600">$99.00</td><td style="color:#60a5fa">Paused</td><td><span class="badge" style="background:#1e3a5f;color:#60a5fa">⏸ Paused</span></td><td style="color:#60a5fa">$1,188</td></tr>
+      <tr><td style="font-weight:500">Miklos Gergely</td><td style="color:#64748b">miklos.gergely@gmail.com</td><td><span class="badge badge-gray">🇭🇺 HU</span></td><td style="color:#60a5fa;font-weight:600">$99.00</td><td style="color:#60a5fa">Paused</td><td><span class="badge" style="background:#1e3a5f;color:#60a5fa">⏸ Paused</span></td><td style="color:#60a5fa">$1,188</td></tr>
       <tr><td style="font-weight:500">Nils Vilnis</td><td style="color:#64748b">nvilnis@gmail.com</td><td><span class="badge badge-gray">🇱🇻 LV</span></td><td style="color:#f87171;font-weight:600">$99.00</td><td><span style="color:#f87171">Apr 28 ⚠️</span></td><td><span class="badge badge-red">Past Due</span></td><td style="color:#f87171">$1,188</td></tr>
       <tr><td style="font-weight:500">Vincent Lam</td><td style="color:#64748b">vincent.lam@pacificphotobooths.com</td><td><span class="badge badge-gray">🇺🇸 US</span></td><td style="color:#4ade80;font-weight:600">$0.99</td><td>May 20, 2026</td><td><span class="badge badge-green">Active</span></td><td style="color:#64748b">$12</td></tr>
     </tbody></table>
@@ -1224,7 +1225,7 @@ function renderDashboard() {
   const lastMonth = '2026-03';
   const mtdExp = data.expenses.filter(e=>e.date.startsWith(thisMonth)).reduce((s,e)=>s+e.amount,0);
   const lastMtdExp = data.expenses.filter(e=>e.date.startsWith(lastMonth)).reduce((s,e)=>s+e.amount,0);
-  const mrr = 1398.99;
+  const mrr = 1200.99; // Solodigitalis $1200 + Vincent $0.99 (Miklos/Aranit paused)
   document.getElementById('kpi-mrr').textContent = fmt(mrr);
   document.getElementById('kpi-expenses').textContent = fmt(mtdExp);
   document.getElementById('kpi-expenses-sub').textContent = data.expenses.filter(e=>e.date.startsWith(thisMonth)).length+' transactions';
@@ -2041,5 +2042,6 @@ loadData();
 renderDashboard();
 document.getElementById('report-period').addEventListener('change',updateReportPreview);
 </script>
+<!-- v2026-04-29c -->
 </body>
 </html>
