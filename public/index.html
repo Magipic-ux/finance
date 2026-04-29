@@ -1574,22 +1574,32 @@ async function loadSumitRevenue() {
     const displayDocs = allDocs; // show all in table
     if(allDocs.length) {
       const SUMIT_TYPES = {0:'Invoice',1:'Credit Invoice',2:'Invoice Receipt',3:'Receipt',4:'Refund',5:'Purchase Invoice',6:'Credit Note',10:'Order',20:'Price Quote'};
-      const amtField = d => d.DocumentValue??d.CompanyValue??0;
-      const mtdTotal = docs.reduce((s,d)=>s+amtField(d),0);
-      const yrTotal  = allDocs.reduce((s,d)=>s+amtField(d),0);
+      // Sumit currency codes: 1=ILS, 2=USD, 3=EUR, 4=GBP, 5=JPY, 6=CAD, 7=AUD
+      const SUMIT_CCY = {1:{sym:'₪',code:'ILS'},2:{sym:'$',code:'USD'},3:{sym:'€',code:'EUR'},4:{sym:'£',code:'GBP'},5:{sym:'¥',code:'JPY'},6:{sym:'$',code:'CAD'},7:{sym:'$',code:'AUD'}};
+      const docCcy = d => SUMIT_CCY[d.Currency] || {sym:'₪',code:'ILS'};
+      // DocumentValue is in the doc's own currency; CompanyValue is always ILS
+      const docAmt = d => d.DocumentValue??0;
+      const ilsAmt = d => d.CompanyValue??d.DocumentValue??0; // use ILS-converted for totals
+      // MTD and YTD totals in ILS (CompanyValue)
+      const mtdTotal = docs.reduce((s,d)=>s+ilsAmt(d),0);
+      const yrTotal  = allDocs.reduce((s,d)=>s+ilsAmt(d),0);
       document.getElementById('sumit-mrr').textContent = '₪'+mtdTotal.toFixed(2);
       document.getElementById('sumit-doc-count').textContent = docs.length+' / '+allDocs.length+' YTD';
       document.getElementById('sumit-total').textContent = '₪'+yrTotal.toFixed(2);
       document.getElementById('sumit-table').style.display='';
       document.getElementById('sumit-empty').style.display='none';
-      document.getElementById('sumit-tbody').innerHTML = displayDocs.map(d=>`
-        <tr>
+      document.getElementById('sumit-tbody').innerHTML = displayDocs.map(d=>{
+        const ccy = docCcy(d);
+        const amt = docAmt(d);
+        const ilsEquiv = d.CompanyValue && d.Currency!==1 ? ` <span style="font-size:10px;color:#475569">(₪${d.CompanyValue.toFixed(2)})</span>` : '';
+        const color = amt < 0 ? '#f87171' : '#4ade80';
+        return `<tr>
           <td style="color:#64748b">${(d.DocumentDate||d.Date||'').split('T')[0]||'&mdash;'}</td>
           <td style="font-family:monospace;color:#94a3b8">${d.DocumentNumber||d.Number||'&mdash;'}</td>
           <td style="font-weight:500">${d.ClientName||d.CustomerName||'&mdash;'}</td>
-          <td style="font-weight:700;color:#4ade80">₪${amtField(d).toFixed(2)}</td>
+          <td style="font-weight:700;color:${color}">${ccy.sym}${amt.toFixed(2)}${ilsEquiv}</td>
           <td><span class="badge badge-violet">${SUMIT_TYPES[d.Type]||'Type '+d.Type}</span></td>
-        </tr>`).join('');
+        </tr>`;}).join('');
     } else {
       document.getElementById('sumit-mrr').textContent = '₪0';
       document.getElementById('sumit-doc-count').textContent = '0';
