@@ -505,6 +505,11 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
         <input type="password" id="settings-api-key" placeholder="sk-ant-api03-..." autocomplete="off">
         <div style="font-size:11px;color:#374151;margin-top:6px">Stored locally only. Used only for receipt scanning.</div>
       </div>
+      <div style="margin-bottom:14px">
+        <label>Claude Model for OCR <span style="color:#475569;font-weight:400">(leave blank for default)</span></label>
+        <input type="text" id="settings-ocr-model" placeholder="claude-3-5-sonnet-20241022" autocomplete="off">
+        <div style="font-size:11px;color:#374151;margin-top:6px">If OCR gives a 404 error, enter a model your API key can access. Default: claude-3-5-sonnet-20241022</div>
+      </div>
       <div id="ocr-key-status" style="font-size:12px"></div>
     </div>
 
@@ -925,7 +930,7 @@ async function ocrReceipt(base64, mimeType) {
   const res = await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST', headers:hdrs,
     body:JSON.stringify({
-      model:'claude-3-haiku-20240307',
+      model:(data.settings?.ocrModel?.trim()||'claude-3-5-sonnet-20241022'),
       max_tokens:400,
       messages:[{role:'user',content:[
         contentBlock,
@@ -1038,6 +1043,7 @@ function markPaid(id){const p=data.payments.find(p=>p.id===id);if(p){p.status='p
 // ===================== SETTINGS =====================
 function renderSettings() {
   document.getElementById('settings-api-key').value = data.settings.anthropicKey||'';
+  document.getElementById('settings-ocr-model').value = data.settings.ocrModel||'';
   document.getElementById('settings-py-revenue').value = data.settings.pyRevenue||'';
   document.getElementById('settings-py-expenses').value = data.settings.pyExpenses||'';
   document.getElementById('settings-make-key').value = data.settings.makeApiKey||'';
@@ -1088,6 +1094,7 @@ function updateYoyPreview() {
 
 function saveSettings() {
   data.settings.anthropicKey = document.getElementById('settings-api-key').value.trim();
+  data.settings.ocrModel = document.getElementById('settings-ocr-model').value.trim();
   data.settings.pyRevenue = document.getElementById('settings-py-revenue').value;
   data.settings.pyExpenses = document.getElementById('settings-py-expenses').value;
   data.settings.makeApiKey = document.getElementById('settings-make-key').value.trim();
