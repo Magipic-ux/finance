@@ -1502,8 +1502,8 @@ async function loadSumitRevenue() {
     });
     const json = await res.json();
     document.getElementById('sumit-loading').style.display='none';
-    // Sumit may wrap results in Data.Documents or return Documents directly
-    const docs = json.Data?.Documents || json.Documents || [];
+    // Sumit /list/ returns Documents or Items at top level (or wrapped in Data)
+    const docs = json.Documents || json.Items || json.Data?.Documents || json.Data?.Items || [];
     if(docs.length) {
       const total = docs.reduce((s,d)=>s+(d.VATIncludedInTotal||d.TotalAmount||d.Amount||0),0);
       document.getElementById('sumit-mrr').textContent = '₪'+total.toFixed(2);
