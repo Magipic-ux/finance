@@ -1567,18 +1567,15 @@ async function loadSumitRevenue() {
     // Sumit /list/ returns Documents or Items at top level (or wrapped in Data)
     const allDocs = json.Documents || json.Items || json.Data?.Documents || json.Data?.Items || [];
     // Log first doc keys to find amount field
-    if(allDocs.length) {
-      console.log('Sumit doc fields:', Object.keys(allDocs[0]), 'Sample:', JSON.stringify(allDocs[0]).slice(0,400));
-      console.log('Sumit Currency values per doc:', allDocs.map(d=>({num:d.DocumentNumber||d.Number, client:d.ClientName||d.CustomerName, Currency:d.Currency, DocumentValue:d.DocumentValue, CompanyValue:d.CompanyValue})));
-    }
+    if(allDocs.length) console.log('Sumit first doc sample:', JSON.stringify(allDocs[0]).slice(0,400));
     // Filter to current month for MTD
     const nowStr = new Date().toISOString().slice(0,7); // e.g. "2026-04"
     const docs = allDocs.filter(d=>(d.DocumentDate||d.Date||'').startsWith(nowStr));
     const displayDocs = allDocs; // show all in table
     if(allDocs.length) {
       const SUMIT_TYPES = {0:'Invoice',1:'Credit Invoice',2:'Invoice Receipt',3:'Receipt',4:'Refund',5:'Purchase Invoice',6:'Credit Note',10:'Order',20:'Price Quote'};
-      // Sumit currency codes: 1=ILS, 2=USD, 3=EUR, 4=GBP, 5=JPY, 6=CAD, 7=AUD
-      const SUMIT_CCY = {1:{sym:'₪',code:'ILS'},2:{sym:'$',code:'USD'},3:{sym:'€',code:'EUR'},4:{sym:'£',code:'GBP'},5:{sym:'¥',code:'JPY'},6:{sym:'$',code:'CAD'},7:{sym:'$',code:'AUD'}};
+      // Sumit currency codes: 0=ILS, 1=USD, 2=EUR, 3=GBP, 4=JPY, 5=CAD, 6=AUD
+      const SUMIT_CCY = {0:{sym:'₪',code:'ILS'},1:{sym:'$',code:'USD'},2:{sym:'€',code:'EUR'},3:{sym:'£',code:'GBP'},4:{sym:'¥',code:'JPY'},5:{sym:'CA$',code:'CAD'},6:{sym:'A$',code:'AUD'}};
       const docCcy = d => SUMIT_CCY[d.Currency] || {sym:'₪',code:'ILS'};
       // DocumentValue is in the doc's own currency; CompanyValue is always ILS
       const docAmt = d => d.DocumentValue??0;
@@ -1594,7 +1591,7 @@ async function loadSumitRevenue() {
       document.getElementById('sumit-tbody').innerHTML = displayDocs.map(d=>{
         const ccy = docCcy(d);
         const amt = docAmt(d);
-        const ilsEquiv = d.CompanyValue && d.Currency!==1 ? ` <span style="font-size:10px;color:#475569">(₪${d.CompanyValue.toFixed(2)})</span>` : '';
+        const ilsEquiv = d.CompanyValue && d.Currency!==0 ? ` <span style="font-size:10px;color:#475569">(₪${d.CompanyValue.toFixed(2)})</span>` : '';
         const color = amt < 0 ? '#f87171' : '#4ade80';
         return `<tr>
           <td style="color:#64748b">${(d.DocumentDate||d.Date||'').split('T')[0]||'&mdash;'}</td>
@@ -1602,7 +1599,6 @@ async function loadSumitRevenue() {
           <td style="font-weight:500">${d.ClientName||d.CustomerName||'&mdash;'}</td>
           <td style="font-weight:700;color:${color}">${ccy.sym}${amt.toFixed(2)}${ilsEquiv}</td>
           <td><span class="badge badge-violet">${SUMIT_TYPES[d.Type]||'Type '+d.Type}</span></td>
-          <td style="font-size:10px;color:#64748b" title="raw Currency field">ccy:${JSON.stringify(d.Currency)}</td>
         </tr>`;}).join('');
     } else {
       document.getElementById('sumit-mrr').textContent = '₪0';
