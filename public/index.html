@@ -1458,12 +1458,22 @@ function renderExpenses() {
       <td style="font-weight:500">${e.vendor}</td>
       <td style="color:#94a3b8">${e.description||'—'}</td>
       <td><span class="badge badge-gray" style="font-size:10px;background:${CAT_COLORS[e.category]||'#374151'}22;color:${CAT_COLORS[e.category]||'#94a3b8'}">${e.category}</span></td>
-      <td style="font-weight:600;color:#fb923c">${e.currency&&e.currency!=='USD'?'<span style="font-size:10px;color:#94a3b8;margin-right:2px">'+e.currency+'</span>':''}${fmt(e.amount)}</td>
+      <td style="font-weight:600;color:#fb923c"><span onclick="cycleCurrency('${e.id}')" title="Click to change currency" style="cursor:pointer;font-size:10px;border:1px solid #334155;border-radius:4px;padding:1px 5px;margin-right:5px;color:${(e.currency||'USD')==='USD'?'#475569':'#f59e0b'};background:#1e293b">${e.currency||'USD'}</span>${fmt(e.amount)}</td>
       <td>${e.receipt?`<img src="${e.receipt}" class="receipt-thumb" onclick="viewReceipt('${e.receipt}')">`:'<span style="color:#374151;font-size:12px">—</span>'}</td>
       <td><button class="btn btn-danger btn-sm" onclick="deleteExpense('${e.id}')">✕</button></td>
     </tr>`).join('');
   renderPieChart('pie-chart-expenses','pie-legend-expenses',data.expenses);
   renderBudgetBreakdown();
+}
+
+function cycleCurrency(id) {
+  const CYCLE = ['USD','ILS','EUR','GBP','CAD','AUD'];
+  const e = data.expenses.find(x => String(x.id) === String(id));
+  if (!e) return;
+  const idx = CYCLE.indexOf(e.currency || 'USD');
+  e.currency = CYCLE[(idx + 1) % CYCLE.length];
+  saveData();
+  renderExpenses();
 }
 
 function renderBudgetBreakdown() {
