@@ -137,6 +137,14 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
 <!-- MAIN -->
 <div id="main">
 
+<!-- EXPENSE INBOX BANNER (shown when Make.com has pushed new receipts) -->
+<div id="inbox-banner" style="display:none;align-items:center;gap:12px;background:#1a2a1a;border-bottom:1px solid #22c55e44;padding:10px 24px;font-size:13px;position:sticky;top:0;z-index:100">
+  <span style="font-size:16px">📥</span>
+  <span id="inbox-banner-text" style="flex:1;color:#86efac"></span>
+  <button class="btn btn-sm" style="background:#22c55e;color:#000;font-weight:600" onclick="importInboxExpenses()">Import All</button>
+  <button class="btn btn-secondary btn-sm" onclick="dismissInboxBanner()">Dismiss</button>
+</div>
+
 <!-- ===== DASHBOARD ===== -->
 <div id="page-dashboard" class="page active">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
@@ -2261,13 +2269,62 @@ function confirmCSVImport() {
   alert(added + ' expenses imported successfully!');
 }
 
+// ===================== EXPENSE INBOX =====================
+let _inboxExpenses = [];
+
+async function checkExpenseInbox() {
+  try {
+    const r = await fetch('/api/expense-inbox');
+    if (!r.ok) return; // KV not configured yet — silent fail
+    const j = await r.json();
+    if (j.expenses && j.expenses.length > 0) {
+      _inboxExpenses = j.expenses;
+      const n = j.expenses.length;
+      document.getElementById('inbox-banner-text').textContent =
+        `${n} new receipt${n>1?'s':''} processed from your dropbox folder — ready to import`;
+      document.getElementById('inbox-banner').style.display = 'flex';
+    }
+  } catch(e) { /* inbox endpoint not available */ }
+}
+
+async function importInboxExpenses() {
+  if (!_inboxExpenses.length) return;
+  const imported = [];
+  _inboxExpenses.forEach(e => {
+    data.expenses.push({
+      id:       Date.now() + Math.random(),
+      vendor:   e.vendor   || 'Unknown',
+      amount:   parseFloat(e.amount) || 0,
+      currency: e.currency || 'USD',
+      date:     e.date     || new Date().toISOString().split('T')[0],
+      category: e.category || 'Other',
+      notes:    (e.notes ? e.notes + ' ' : '') + (e.receipt ? '[' + e.receipt + ']' : ''),
+      receipt:  ''
+    });
+    imported.push(e.vendor || 'expense');
+  });
+  saveData();
+  // Clear the server-side inbox
+  try { await fetch('/api/expense-inbox', { method: 'DELETE' }); } catch(e) {}
+  _inboxExpenses = [];
+  document.getElementById('inbox-banner').style.display = 'none';
+  if (currentPage === 'expenses') renderExpenses(); else renderDashboard();
+  alert('✅ Imported ' + imported.length + ' expense' + (imported.length > 1 ? 's' : '') + ' from dropbox:\n' + imported.join(', '));
+}
+
+function dismissInboxBanner() {
+  document.getElementById('inbox-banner').style.display = 'none';
+}
+
 // ===================== INIT =====================
 loadData();
 renderDashboard();
 document.getElementById('report-period').addEventListener('change',updateReportPreview);
 // Auto-load Stripe revenue on start if key is saved
 if (data.settings.stripeKey?.trim()) loadStripeRevenue();
+// Check for receipts pushed from Make.com dropbox
+checkExpenseInbox();
 </script>
-<!-- v2026-04-29f -->
+<!-- v2026-04-30a -->
 </body>
 </html>
