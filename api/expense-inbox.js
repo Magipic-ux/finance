@@ -1,32 +1,36 @@
 // Vercel serverless — expense inbox for Make.com → Dashboard sync
-// Stores pending expenses in Vercel KV (Upstash Redis) until dashboard imports them
+// Uses Vercel Redis (Upstash) via REST API derived from the REDIS_URL connection string
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const KV_URL   = process.env.KV_REST_API_URL;
-  const KV_TOKEN = process.env.KV_REST_API_TOKEN;
-
-  if (!KV_URL || !KV_TOKEN) {
+  // Upstash Redis URL format: redis://default:TOKEN@HOST:PORT
+  // The REST API lives at https://HOST with the same TOKEN as bearer auth
+  const redisUrl = process.env.finance_inbox_REDIS_URL || '';
+  const match = redisUrl.match(/^redis[s]?:\/\/[^:]*:([^@]+)@([^:/]+)/);
+  if (!match) {
     return res.status(503).json({
-      error: 'Vercel KV not configured',
-      hint: 'Go to Vercel Dashboard → Storage → Create Database → KV, then link it to this project'
+      error: 'Redis not configured',
+      hint: 'finance_inbox_REDIS_URL env var is missing or malformed',
+      got: redisUrl ? 'set but unreadable' : 'not set'
     });
   }
+  const REST_TOKEN = decodeURIComponent(match[1]);
+  const REST_HOST  = match[2];
+  const REST_URL   = `https://${REST_HOST}`;
 
   const KEY = 'expense_inbox';
 
-  // Execute a single Redis command via Upstash REST API
   async function kvCmd(args) {
-    const r = await fetch(KV_URL, {
+    const r = await fetch(REST_URL, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${KV_TOKEN}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${REST_TOKEN}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(args)
     });
     const j = await r.json();
-    if (j.error) throw new Error('KV error: ' + j.error);
+    if (j.error) throw new Error('Redis error: ' + j.error);
     return j.result;
   }
 
@@ -44,15 +48,15 @@ module.exports = async function handler(req, res) {
     const expense = req.body || {};
     const inbox = await getInbox();
     inbox.push({
-      vendor:   expense.vendor   || expense.Vendor   || 'Unknown',
-      amount:   parseFloat(expense.amount   || expense.Amount   || 0),
-      currency: expense.currency || expense.Currency || 'USD',
-      date:     expense.date     || expense.Date     || new Date().toISOString().split('T')[0],
-      category: expense.category || expense.Category || 'Other',
-      notes:    expense.notes    || expense.description || expense.Description || '',
-      receipt:  expense.receipt  || expense.fileName || '',
-      _id:          `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      _receivedAt:  new Date().toISOString()
+      vendor:      expense.vendor      || expense.Vendor      || 'Unknown',
+      amount:      parseFloat(expense.amount      || expense.Amount      || 0),
+      currency:    expense.currency    || expense.Currency    || 'USD',
+      date:        expense.date        || expense.Date        || new Date().toISOString().split('T')[0],
+      category:    expense.category    || expense.Category    || 'Other',
+      notes:       expense.notes       || expense.description || expense.Description || '',
+      receipt:     expense.receipt     || expense.fileName    || '',
+      _id:         `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      _receivedAt: new Date().toISOString()
     });
     await setInbox(inbox);
     return res.status(200).json({ ok: true, pending: inbox.length });
