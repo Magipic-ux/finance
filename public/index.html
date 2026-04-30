@@ -1567,7 +1567,10 @@ async function loadSumitRevenue() {
     // Sumit /list/ returns Documents or Items at top level (or wrapped in Data)
     const allDocs = json.Documents || json.Items || json.Data?.Documents || json.Data?.Items || [];
     // Log first doc keys to find amount field
-    if(allDocs.length) console.log('Sumit doc fields:', Object.keys(allDocs[0]), 'Sample:', JSON.stringify(allDocs[0]).slice(0,400));
+    if(allDocs.length) {
+      console.log('Sumit doc fields:', Object.keys(allDocs[0]), 'Sample:', JSON.stringify(allDocs[0]).slice(0,400));
+      console.log('Sumit Currency values per doc:', allDocs.map(d=>({num:d.DocumentNumber||d.Number, client:d.ClientName||d.CustomerName, Currency:d.Currency, DocumentValue:d.DocumentValue, CompanyValue:d.CompanyValue})));
+    }
     // Filter to current month for MTD
     const nowStr = new Date().toISOString().slice(0,7); // e.g. "2026-04"
     const docs = allDocs.filter(d=>(d.DocumentDate||d.Date||'').startsWith(nowStr));
@@ -1599,6 +1602,7 @@ async function loadSumitRevenue() {
           <td style="font-weight:500">${d.ClientName||d.CustomerName||'&mdash;'}</td>
           <td style="font-weight:700;color:${color}">${ccy.sym}${amt.toFixed(2)}${ilsEquiv}</td>
           <td><span class="badge badge-violet">${SUMIT_TYPES[d.Type]||'Type '+d.Type}</span></td>
+          <td style="font-size:10px;color:#64748b" title="raw Currency field">ccy:${JSON.stringify(d.Currency)}</td>
         </tr>`;}).join('');
     } else {
       document.getElementById('sumit-mrr').textContent = '₪0';
