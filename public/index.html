@@ -1198,7 +1198,7 @@ async function fetchInvoiceInbox() {
   }
   if(promptEl) promptEl.style.display='none';
   try {
-    const res = await fetch('https://eu2.make.com/api/v2/data-store-records?dataStoreId=160891&teamId=1766172&limit=100', {
+    const res = await fetch('/api/make-inbox', {
       headers: {'Authorization': 'Token '+apiKey}
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
@@ -1267,10 +1267,10 @@ async function markInboxPaid(i) {
   const apiKey = data.settings.makeApiKey?.trim();
   if(!apiKey) { alert('No Make.com API key set.'); return; }
   try {
-    await fetch('https://eu2.make.com/api/v2/data-store-records/' + encodeURIComponent(r.key) + '?dataStoreId=160891&teamId=1766172', {
+    await fetch('/api/make-inbox', {
       method: 'PATCH',
       headers: {'Authorization': 'Token ' + apiKey, 'Content-Type': 'application/json'},
-      body: JSON.stringify({data:{status:'paid'}})
+      body: JSON.stringify({recordKey: r.key, status: 'paid'})
     });
     await fetchInvoiceInbox();
   } catch(e) {
