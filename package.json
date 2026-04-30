@@ -1,5 +1,8 @@
 {
   "name": "magipic-finance",
   "version": "1.0.0",
-  "description": "Magipic Finance Dashboard"
+  "description": "Magipic Finance Dashboard",
+  "dependencies": {
+    "ioredis": "^5.3.2"
+  }
 }
