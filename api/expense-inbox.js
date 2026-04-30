@@ -24,12 +24,21 @@ module.exports = async function handler(req, res) {
   const KEY = 'expense_inbox';
 
   async function kvCmd(args) {
-    const r = await fetch(REST_URL, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${REST_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(args)
-    });
-    const j = await r.json();
+    let r, text;
+    try {
+      r = await fetch(REST_URL, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${REST_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(args)
+      });
+      text = await r.text();
+    } catch(e) {
+      throw new Error('Fetch failed: ' + e.message + ' | REST_URL: ' + REST_URL);
+    }
+    let j;
+    try { j = JSON.parse(text); } catch(e) {
+      throw new Error('Non-JSON from Redis (' + r.status + '): ' + text.slice(0, 200));
+    }
     if (j.error) throw new Error('Redis error: ' + j.error);
     return j.result;
   }
@@ -44,6 +53,10 @@ module.exports = async function handler(req, res) {
   }
 
   // POST — Make.com pushes an OCR-extracted expense here
+  try { await kvCmd(['PING']); } catch(e) {
+    return res.status(500).json({ error: 'Redis connection failed', detail: e.message });
+  }
+
   if (req.method === 'POST') {
     const expense = req.body || {};
     const inbox = await getInbox();
