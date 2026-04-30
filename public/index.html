@@ -1453,14 +1453,17 @@ function renderExpenses() {
   if(!filtered.length){tbody.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
   tbody.innerHTML=filtered.map(e=>`
-    <tr>
+    <tr style="opacity:${e.paid?'0.5':'1'}">
       <td style="color:#64748b;white-space:nowrap">${fmtDate(e.date)}</td>
-      <td style="font-weight:500">${e.vendor}</td>
+      <td style="font-weight:500">${e.paid?'<span style="color:#22c55e;margin-right:5px;font-size:11px">✓ PAID</span>':''}<span style="${e.paid?'text-decoration:line-through;color:#64748b':''}">${e.vendor}</span></td>
       <td style="color:#94a3b8">${e.description||'—'}</td>
       <td><span class="badge badge-gray" style="font-size:10px;background:${CAT_COLORS[e.category]||'#374151'}22;color:${CAT_COLORS[e.category]||'#94a3b8'}">${e.category}</span></td>
       <td style="font-weight:600;color:#fb923c"><span onclick="cycleCurrency('${e.id}')" title="Click to change currency" style="cursor:pointer;font-size:10px;border:1px solid #334155;border-radius:4px;padding:1px 5px;margin-right:5px;color:${(e.currency||'USD')==='USD'?'#475569':'#f59e0b'};background:#1e293b">${e.currency||'USD'}</span>${fmt(e.amount)}</td>
       <td>${e.receipt?`<img src="${e.receipt}" class="receipt-thumb" onclick="viewReceipt('${e.receipt}')">`:'<span style="color:#374151;font-size:12px">—</span>'}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="deleteExpense('${e.id}')">✕</button></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm" onclick="togglePaid('${e.id}')" title="${e.paid?'Mark unpaid':'Mark paid'}" style="background:${e.paid?'#14532d':'#052e16'};color:${e.paid?'#4ade80':'#22c55e'};border:1px solid ${e.paid?'#16a34a':'#15803d'};margin-right:4px">${e.paid?'✓':'✓'}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteExpense('${e.id}')">✕</button>
+      </td>
     </tr>`).join('');
   renderPieChart('pie-chart-expenses','pie-legend-expenses',data.expenses);
   renderBudgetBreakdown();
@@ -1472,6 +1475,15 @@ function cycleCurrency(id) {
   if (!e) return;
   const idx = CYCLE.indexOf(e.currency || 'USD');
   e.currency = CYCLE[(idx + 1) % CYCLE.length];
+  saveData();
+  renderExpenses();
+}
+
+function togglePaid(id) {
+  const e = data.expenses.find(x => String(x.id) === String(id));
+  if (!e) return;
+  e.paid = !e.paid;
+  e.paidAt = e.paid ? new Date().toISOString() : null;
   saveData();
   renderExpenses();
 }
