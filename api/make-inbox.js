@@ -34,7 +34,10 @@ module.exports = async function handler(req, res) {
       const text = await upstream.text();
       return res.status(upstream.status).json({ error: 'Make.com error', detail: text.slice(0, 200) });
     }
-    return res.status(200).json(await upstream.json());
+    const json = await upstream.json();
+    // Make.com returns { dataStoreRecords: [...] } — normalise to { records: [...] }
+    const raw = json.dataStoreRecords || json.records || [];
+    return res.status(200).json({ records: raw, _raw: json });
 
   } catch (e) {
     return res.status(500).json({ error: 'Proxy error: ' + e.message });
