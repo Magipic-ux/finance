@@ -1203,7 +1203,9 @@ async function fetchInvoiceInbox() {
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
     const json = await res.json();
-    inboxRecords = (json.records || []).map(r => ({
+    // Make.com returns dataStoreRecords; proxy normalises to records — handle both
+    const raw = json.records || json.dataStoreRecords || [];
+    inboxRecords = raw.map(r => ({
       key: r.key,
       ...r.data
     }));
