@@ -1,14 +1,13 @@
 // Vercel serverless proxy — bypasses CORS on Make.com data store API
+// API key stored server-side as MAKE_API_KEY env var (never exposed to browser)
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, PATCH, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // API key forwarded as Authorization header from browser
-  const authHeader = req.headers['authorization'] || '';
-  const makeApiKey = authHeader.replace(/^Token\s+/i, '').trim();
-  if (!makeApiKey) return res.status(400).json({ error: 'Missing Authorization header' });
+  const makeApiKey = (process.env.MAKE_API_KEY || '').trim();
+  if (!makeApiKey) return res.status(503).json({ error: 'MAKE_API_KEY env var not configured on server' });
 
   const BASE = 'https://eu2.make.com/api/v2/data-store-records';
   const STORE_QS = 'dataStoreId=160891&teamId=1766172&limit=100';
@@ -32,12 +31,12 @@ module.exports = async function handler(req, res) {
     });
     if (!upstream.ok) {
       const text = await upstream.text();
-      return res.status(upstream.status).json({ error: 'Make.com error', detail: text.slice(0, 200) });
+      return res.status(upstream.status).json({ error: 'Make.com error', detail: text.slice(0, 500) });
     }
     const json = await upstream.json();
     // Make.com returns { dataStoreRecords: [...] } — normalise to { records: [...] }
     const raw = json.dataStoreRecords || json.records || [];
-    return res.status(200).json({ records: raw, _raw: json });
+    return res.status(200).json({ records: raw });
 
   } catch (e) {
     return res.status(500).json({ error: 'Proxy error: ' + e.message });

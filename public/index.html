@@ -1202,20 +1202,11 @@ function clearInboxError() {
 }
 
 async function fetchInvoiceInbox() {
-  const apiKey = data.settings.makeApiKey?.trim();
   const promptEl = document.getElementById('inbox-key-prompt');
-  if(!apiKey) {
-    if(promptEl) promptEl.style.display='flex';
-    clearInboxError();
-    renderInboxTable();
-    return;
-  }
   if(promptEl) promptEl.style.display='none';
   clearInboxError();
   try {
-    const res = await fetch('/api/make-inbox', {
-      headers: {'Authorization': 'Token '+apiKey}
-    });
+    const res = await fetch('/api/make-inbox');
     const json = await res.json();
     console.log('make-inbox raw response:', JSON.stringify(json).slice(0,500));
     if(!res.ok) {
@@ -1288,12 +1279,10 @@ function importInboxAsExpense(i) {
 
 async function markInboxPaid(i) {
   const r = inboxFiltered[i]; if(!r) return;
-  const apiKey = data.settings.makeApiKey?.trim();
-  if(!apiKey) { alert('No Make.com API key set.'); return; }
   try {
     await fetch('/api/make-inbox', {
       method: 'PATCH',
-      headers: {'Authorization': 'Token ' + apiKey, 'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({recordKey: r.key, status: 'paid'})
     });
     await fetchInvoiceInbox();
