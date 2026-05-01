@@ -1454,7 +1454,7 @@ function renderExpenses() {
   const cats=[...new Set(data.expenses.map(e=>e.category))].sort();
   cats.forEach(c=>{if(![...catSel.options].map(o=>o.value).includes(c)){const o=document.createElement('option');o.value=c;o.textContent=c;catSel.appendChild(o);}});
   const mSel=document.getElementById('expense-month-filter');
-  const months=[...new Set(data.expenses.map(e=>e.date.slice(0,7)))].sort().reverse();
+  const months=[...new Set(data.expenses.filter(e=>e&&e.date).map(e=>e.date.slice(0,7)))].sort().reverse();
   months.forEach(m=>{if(![...mSel.options].map(o=>o.value).includes(m)){const o=document.createElement('option');o.value=m;const[y,mo]=m.split('-');o.textContent=new Date(+y,+mo-1).toLocaleDateString('en-US',{month:'long',year:'numeric'});mSel.appendChild(o);}});
   let filtered=[...data.expenses].filter(e=>e&&e.date).sort((a,b)=>b.date.localeCompare(a.date));
   if(search)filtered=filtered.filter(e=>(e.vendor+e.description+(e.category||'')+(e.notes||'')).toLowerCase().includes(search));
