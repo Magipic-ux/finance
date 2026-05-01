@@ -10,14 +10,14 @@ module.exports = async function handler(req, res) {
   if (!makeApiKey) return res.status(503).json({ error: 'MAKE_API_KEY env var not configured on server' });
 
   const BASE = 'https://eu2.make.com/api/v2/data-store-records';
-  const STORE_QS = 'dataStoreId=160891&teamId=1766172&limit=100';
+  const STORE_QS = 'dataStoreId=160891&limit=100';
 
   try {
     // PATCH — update a record's status (e.g. mark paid)
     if (req.method === 'PATCH') {
       const { recordKey, status } = req.body || {};
       if (!recordKey) return res.status(400).json({ error: 'Missing recordKey' });
-      const upstream = await fetch(`${BASE}/${encodeURIComponent(recordKey)}?${STORE_QS}`, {
+      const upstream = await fetch(`${BASE}/${encodeURIComponent(recordKey)}?dataStoreId=160891`, {
         method: 'PATCH',
         headers: { Authorization: `Token ${makeApiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: { status: status || 'paid' } })
