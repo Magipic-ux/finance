@@ -653,6 +653,9 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
     </div>
   </div>
 
+  <!-- Error banner -->
+  <div id="inbox-error" style="display:none;background:#1f0808;border:1px solid #7f1d1d;border-radius:10px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:#fca5a5"></div>
+
   <!-- Make.com key prompt -->
   <div id="inbox-key-prompt" class="alert alert-amber" style="margin-bottom:16px;display:none">
     <div>⚙️</div>
@@ -1188,23 +1191,42 @@ function saveSettings() {
 }
 
 // ===================== INVOICE INBOX =====================
+function showInboxError(msg) {
+  const el = document.getElementById('inbox-error');
+  if(el) { el.textContent = '⚠ ' + msg; el.style.display='block'; }
+  console.error('Invoice Inbox:', msg);
+}
+function clearInboxError() {
+  const el = document.getElementById('inbox-error');
+  if(el) el.style.display='none';
+}
+
 async function fetchInvoiceInbox() {
   const apiKey = data.settings.makeApiKey?.trim();
   const promptEl = document.getElementById('inbox-key-prompt');
   if(!apiKey) {
     if(promptEl) promptEl.style.display='flex';
+    clearInboxError();
     renderInboxTable();
     return;
   }
   if(promptEl) promptEl.style.display='none';
+  clearInboxError();
   try {
     const res = await fetch('/api/make-inbox', {
       headers: {'Authorization': 'Token '+apiKey}
     });
-    if(!res.ok) throw new Error('HTTP '+res.status);
     const json = await res.json();
+    console.log('make-inbox raw response:', JSON.stringify(json).slice(0,500));
+    if(!res.ok) {
+      showInboxError('Make.com API error (' + res.status + '): ' + (json.error||json.message||'unknown'));
+      inboxRecords = [];
+      renderInboxTable();
+      return;
+    }
     // Make.com returns dataStoreRecords; proxy normalises to records — handle both
     const raw = json.records || json.dataStoreRecords || [];
+    if(raw.length === 0) console.warn('make-inbox: response OK but 0 records. Full response:', JSON.stringify(json));
     inboxRecords = raw.map(r => ({
       key: r.key,
       ...r.data
@@ -1213,7 +1235,7 @@ async function fetchInvoiceInbox() {
   } catch(e) {
     inboxRecords = [];
     renderInboxTable();
-    console.warn('Invoice Inbox fetch error:', e.message);
+    showInboxError('Network error: ' + e.message);
   }
 }
 
