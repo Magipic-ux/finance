@@ -1215,12 +1215,12 @@ async function fetchInvoiceInbox() {
       renderInboxTable();
       return;
     }
-    // Make.com returns dataStoreRecords; proxy normalises to records — handle both
     const raw = json.records || json.dataStoreRecords || [];
     if(raw.length === 0) console.warn('make-inbox: response OK but 0 records. Full response:', JSON.stringify(json));
+    // Redis endpoint stores fields flat; old Make.com format nested under r.data — handle both
     inboxRecords = raw.map(r => ({
       key: r.key,
-      ...r.data
+      ...(r.data ? r.data : r)
     }));
     renderInboxTable();
   } catch(e) {
